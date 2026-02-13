@@ -659,6 +659,18 @@ rag:
   please_refer: Vui lòng tham khảo.
   retrieving: Đang lấy tài liệu tham khảo từ Kendra...
   title: RAG Chat
+research:
+  description: Thực hiện các nhiệm vụ nghiên cứu đa dạng trên các ngành công nghiệp bằng cách sử dụng tìm kiếm web và tạo báo cáo nghiên cứu chi tiết.
+  general_research: Nghiên cứu chung
+  general_research_desc: Nghiên cứu thông tin trên nhiều lĩnh vực và cung cấp phân tích toàn diện
+  label: Nghiên cứu
+  mini_research: Nghiên cứu nhanh
+  mini_research_desc: Nghiên cứu nhanh các điểm chính và cung cấp câu trả lời ngắn gọn
+  select_mode: Chọn chế độ
+  start_conversation: Bắt đầu trò chuyện với Research Agent
+  technical_research: Nghiên cứu kỹ thuật
+  technical_research_desc: Thực hiện nghiên cứu và phân tích kỹ thuật chi tiết
+  title: Nghiên cứu
 setting:
   ai: Generative AI
   ai_items:

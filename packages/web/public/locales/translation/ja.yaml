@@ -792,6 +792,18 @@ rag:
   please_refer: をご参照ください。
   retrieving: Kendra から参考ドキュメントを取得しています...
   title: RAG チャット
+research:
+  description: 業種・業界問わず様々なリサーチタスクを Web 検索を駆使して実施し、詳細な調査レポートを作成します。
+  general_research: 一般調査
+  general_research_desc: 幅広い分野の情報を調査し、総合的な分析を提供します
+  label: リサーチ
+  mini_research: クイック調査
+  mini_research_desc: 短時間で要点を調査し、簡潔な回答を提供します
+  select_mode: モードを選択してください
+  start_conversation: リサーチエージェントと会話を開始
+  technical_research: 技術調査
+  technical_research_desc: 詳細な技術調査と分析を実施します
+  title: リサーチ
 setting:
   ai_items:
     agent_name: Agent 名

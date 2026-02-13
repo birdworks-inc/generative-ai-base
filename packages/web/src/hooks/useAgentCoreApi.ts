@@ -48,7 +48,17 @@ const useAgentCoreApi = (id: string) => {
 
   // Process a chunk of Strands event data and add it to the assistant message
   const processChunk = useCallback(
-    (eventText: string, model: Model, processor: StrandsStreamProcessor) => {
+    (
+      eventText: string,
+      model: Model,
+      processor: StrandsStreamProcessor,
+      isResearchAgent: boolean = false
+    ) => {
+      // Set research agent flag if this is the first chunk
+      if (isResearchAgent) {
+        processor.setResearchAgent(true);
+      }
+
       const processed = processor.processEvent(eventText);
 
       if (processed) {
@@ -80,6 +90,13 @@ const useAgentCoreApi = (id: string) => {
 
       // Create a new stream processor for this request
       const processor = streamProcessor();
+
+      // Check if this is a research agent request
+      const isResearchAgent =
+        req.mode !== undefined &&
+        ['technical-research', 'mini-research', 'general-research'].includes(
+          req.mode
+        );
 
       try {
         pushMessage('user', req.prompt);
@@ -206,7 +223,12 @@ const useAgentCoreApi = (id: string) => {
                   }
 
                   if (processedText.trim()) {
-                    processChunk(processedText, req.model, processor);
+                    processChunk(
+                      processedText,
+                      req.model,
+                      processor,
+                      isResearchAgent
+                    );
                   }
                 }
               }
@@ -219,7 +241,12 @@ const useAgentCoreApi = (id: string) => {
                 processedText = buffer.substring(6);
               }
               if (processedText.trim()) {
-                processChunk(processedText, req.model, processor);
+                processChunk(
+                  processedText,
+                  req.model,
+                  processor,
+                  isResearchAgent
+                );
               }
             }
           } else {
@@ -232,7 +259,8 @@ const useAgentCoreApi = (id: string) => {
             processChunk(
               JSON.stringify(response, null, 2),
               req.model,
-              processor
+              processor,
+              isResearchAgent
             );
           }
         } else {
@@ -242,7 +270,12 @@ const useAgentCoreApi = (id: string) => {
             pushMessage('assistant', '');
             isFirstChunk = false;
           }
-          processChunk(JSON.stringify(response, null, 2), req.model, processor);
+          processChunk(
+            JSON.stringify(response, null, 2),
+            req.model,
+            processor,
+            isResearchAgent
+          );
         }
 
         // Save chat history

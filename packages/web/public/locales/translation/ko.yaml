@@ -537,6 +537,18 @@ rag:
   please_refer: .
   retrieving: Kendra에서 참조 문서를 검색하는 중...
   title: RAG 채팅
+research:
+  description: 웹 검색을 활용하여 산업 전반에 걸친 다양한 연구 작업을 수행하고 상세한 연구 보고서를 작성합니다.
+  general_research: 일반 조사
+  general_research_desc: 광범위한 분야의 정보를 조사하고 종합적인 분석을 제공합니다
+  label: 리서치
+  mini_research: 빠른 조사
+  mini_research_desc: 핵심 사항을 빠르게 조사하고 간결한 답변을 제공합니다
+  select_mode: 모드를 선택하세요
+  start_conversation: 리서치 에이전트와 대화 시작
+  technical_research: 기술 조사
+  technical_research_desc: 상세한 기술 조사 및 분석을 수행합니다
+  title: 리서치
 setting:
   ai_items:
     agent_name: 에이전트 이름

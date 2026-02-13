@@ -1,4 +1,4 @@
-import { Stack, StackProps, CfnOutput } from 'aws-cdk-lib';
+import { Stack, StackProps, CfnOutput, Duration } from 'aws-cdk-lib';
 import { Construct } from 'constructs';
 import {
   Auth,
@@ -29,6 +29,7 @@ import {
 } from 'aws-cdk-lib/aws-ec2';
 import { Bucket } from 'aws-cdk-lib/aws-s3';
 import { AgentCoreStack } from './agent-core-stack';
+import { ResearchAgentCoreStack } from './research-agent-core-stack';
 import * as path from 'path';
 import { RemoteOutputs } from 'cdk-remote-stack';
 import { REMOTE_OUTPUT_KEYS } from './remote-output-keys';
@@ -44,6 +45,9 @@ export interface GenerativeAiUseCasesStackProps extends StackProps {
   readonly createGenericAgentCoreRuntime?: boolean;
   readonly agentBuilderEnabled?: boolean;
   readonly agentCoreStack?: AgentCoreStack;
+  // Research Agent Core
+  readonly researchAgentEnabled?: boolean;
+  readonly researchAgentCoreStack?: ResearchAgentCoreStack;
   // Video Generation
   readonly videoBucketRegionMap: Record<string, string>;
   // Guardrail
@@ -83,6 +87,7 @@ export class GenerativeAiUseCasesStack extends Stack {
       const agentRemoteOutputs = new RemoteOutputs(this, 'AgentRemoteOutputs', {
         stack: props.agentStack,
         alwaysUpdate: true,
+        timeout: Duration.seconds(600),
       });
       agentsJson = agentRemoteOutputs.get(REMOTE_OUTPUT_KEYS.AGENTS);
     }
@@ -91,11 +96,14 @@ export class GenerativeAiUseCasesStack extends Stack {
     let genericRuntimeName: string | undefined;
     let agentBuilderRuntimeArn: string | undefined;
     let agentBuilderRuntimeName: string | undefined;
+    let researchRuntimeArn: string | undefined;
+    let researchRuntimeName: string | undefined;
 
     // Get runtime info from remote AgentCore stack using cdk-remote-stack
     if (params.createGenericAgentCoreRuntime || params.agentBuilderEnabled) {
       const remoteOutputs = new RemoteOutputs(this, 'AgentCoreRemoteOutputs', {
         stack: props.agentCoreStack!,
+        timeout: Duration.seconds(600),
       });
 
       if (params.createGenericAgentCoreRuntime) {
@@ -111,6 +119,25 @@ export class GenerativeAiUseCasesStack extends Stack {
           'AgentBuilderAgentCoreRuntimeName'
         );
       }
+    }
+
+    // Get runtime info from remote Research AgentCore stack
+    if (params.researchAgentEnabled) {
+      const researchRemoteOutputs = new RemoteOutputs(
+        this,
+        'ResearchAgentCoreRemoteOutputs',
+        {
+          stack: props.researchAgentCoreStack!,
+          timeout: Duration.seconds(600),
+        }
+      );
+
+      researchRuntimeArn = researchRemoteOutputs.get(
+        REMOTE_OUTPUT_KEYS.RESEARCH_AGENT_CORE_RUNTIME_ARN
+      );
+      researchRuntimeName = researchRemoteOutputs.get(
+        REMOTE_OUTPUT_KEYS.RESEARCH_AGENT_CORE_RUNTIME_NAME
+      );
     }
 
     // Common security group for saving ENI in Closed network mode
@@ -151,9 +178,14 @@ export class GenerativeAiUseCasesStack extends Stack {
       crossAccountBedrockRoleArn: params.crossAccountBedrockRoleArn,
       allowedIpV4AddressRanges: params.allowedIpV4AddressRanges,
       allowedIpV6AddressRanges: params.allowedIpV6AddressRanges,
-      additionalS3Buckets: props.agentCoreStack?.fileBucket
-        ? [props.agentCoreStack.fileBucket]
-        : undefined,
+      additionalS3Buckets: [
+        ...(props.agentCoreStack?.fileBucket
+          ? [props.agentCoreStack.fileBucket]
+          : []),
+        ...(props.researchAgentCoreStack?.fileBucket
+          ? [props.researchAgentCoreStack.fileBucket]
+          : []),
+      ].filter(Boolean),
       userPool: auth.userPool,
       idPool: auth.idPool,
       userPoolClient: auth.client,
@@ -227,13 +259,15 @@ export class GenerativeAiUseCasesStack extends Stack {
     if (
       params.agentCoreExternalRuntimes.length > 0 ||
       genericRuntimeArn ||
-      agentBuilderRuntimeArn
+      agentBuilderRuntimeArn ||
+      researchRuntimeArn
     ) {
       new AgentCore(this, 'AgentCore', {
         agentCoreExternalRuntimes: params.agentCoreExternalRuntimes,
         idPool: auth.idPool,
         genericRuntimeArn,
         agentBuilderRuntimeArn,
+        researchRuntimeArn,
       });
     }
 
@@ -293,6 +327,14 @@ export class GenerativeAiUseCasesStack extends Stack {
         : undefined,
       agentCoreExternalRuntimes: params.agentCoreExternalRuntimes,
       agentCoreRegion: params.agentCoreRegion,
+      researchAgentEnabled: params.researchAgentEnabled,
+      researchAgentRuntime: researchRuntimeArn
+        ? {
+            name: researchRuntimeName || 'ResearchAgentCoreRuntime',
+            arn: researchRuntimeArn,
+            description: 'Research Agent Core Runtime with Claude Agent SDK',
+          }
+        : undefined,
       // Frontend
       hiddenUseCases: params.hiddenUseCases,
       // Custom Domain
