@@ -4607,6 +4607,11 @@ exports[`GenerativeAiUseCases matches the snapshot (closed network mode) 6`] = `
         "Ref": "AuthUserPoolclientA74673A9",
       },
     },
+    "FileBucketName": {
+      "Value": {
+        "Ref": "APIFileBucket8FB29855",
+      },
+    },
     "Flows": {
       "Value": "W10=",
     },
@@ -27192,6 +27197,11 @@ exports[`GenerativeAiUseCases matches the snapshot 6`] = `
       },
       "Value": {
         "Ref": "AuthUserPoolclientA74673A9",
+      },
+    },
+    "FileBucketName": {
+      "Value": {
+        "Ref": "APIFileBucket8FB29855",
       },
     },
     "Flows": {

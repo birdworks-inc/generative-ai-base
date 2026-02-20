@@ -468,6 +468,10 @@ export class GenerativeAiUseCasesStack extends Stack {
       value: api.api.url,
     });
 
+    new CfnOutput(this, 'FileBucketName', {
+      value: api.fileBucket.bucketName,
+    });
+
     new CfnOutput(this, 'UserPoolId', { value: auth.userPool.userPoolId });
 
     new CfnOutput(this, 'UserPoolClientId', {

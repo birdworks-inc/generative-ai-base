@@ -174,7 +174,7 @@ Resolver Endpoint の IP アドレスは、[Route53](https://console.aws.amazon.
 | API Gateway                 | メインの API               | \<xxx>.execute-api.\<region>.amazonaws.com                  | 方法2                 |
 | Cognito User Pool           | 認証                       | cognito-idp.\<region>.amazonaws.com                         | 方法2                 |
 | Cognito Identity Pool       | 一時認証情報の取得         | cognito-identity.\<region>.amazonaws.com                    | 方法2                 |
-| Amazon S3                   | 署名付き URL               | s3.\<region>.amazonaws.com                                  | 方法2                 |
+| Amazon S3                   | 署名付き URL               | \<S3 バケット名>.s3.\<region>.amazonaws.com                 | 方法2                 |
 | AWS Lambda                  | ストリーミング出力         | lambda.\<region>.amazonaws.com                              | 方法2                 |
 | Amazon Transcribe           | 文字起こし                 | transcribe.\<region>.amazonaws.com                          | 方法2                 |
 | Amazon Transcribe Streaming | リアルタイム文字起こし     | transcribestreaming.\<region>.amazonaws.com                 | 方法2                 |
