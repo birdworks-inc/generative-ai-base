@@ -514,6 +514,7 @@ meetingMinutes:
 model:
   parameters:
     reasoning_budget: 推理预算
+    reasoning_effort: 思考深度
 navigation:
   agentChat: Agent聊天
   chat: 聊天
