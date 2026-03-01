@@ -477,6 +477,7 @@ model:
   parameters:
     reasoning: 추론
     reasoning_budget: 추론 예산
+    reasoning_effort: 사고 깊이
 navigation:
   agentChat: 에이전트 채팅
   chat: 채팅

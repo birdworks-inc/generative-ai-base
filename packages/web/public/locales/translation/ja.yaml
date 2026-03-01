@@ -746,6 +746,7 @@ meetingMinutes:
 model:
   parameters:
     reasoning_budget: 深く考えるトークン数上限
+    reasoning_effort: 思考の深さ (Effort)
 navigation:
   agentChat: Agent チャット
   chat: チャット
