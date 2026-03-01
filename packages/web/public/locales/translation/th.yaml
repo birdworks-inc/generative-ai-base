@@ -626,6 +626,7 @@ meetingMinutes:
 model:
   parameters:
     reasoning_budget: งบประมาณการให้เหตุผล
+    reasoning_effort: ระดับการคิด
 navigation:
   agentChat: Agent Chat
   chat: Chat
