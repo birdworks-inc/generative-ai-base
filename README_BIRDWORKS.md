@@ -14,8 +14,12 @@ generative-ai-base/
     ├── custom/demo   ← デモ環境
     └── custom/self   ← 自社環境
 
-generative-ai-addon-{name}/      ← アドオンごとに独立リポジトリ
-    例）generative-ai-addon-labeler/ ← AIラベル付与アドオン
+generative-ai-addon-{name}/        ← アドオンごとに独立リポジトリ（main運用）
+    generative-ai-addon-labeler/   ← AIラベル付与アドオン
+        packages/
+            web/    ← Reactコンポーネント（@birdworks/genu-addon-labeler-web）
+            cdk/    ← CDK構成（@birdworks/genu-addon-labeler-cdk）
+            lambda/ ← Lambda処理（@birdworks/genu-addon-labeler-lambda）
 
 generative-ai-clientA/        ← テンプレートから作成
 generative-ai-clientB/
@@ -93,7 +97,7 @@ addonRegistry.push(LabelerAddon)   // オン
 
 | アドオン名 | リポジトリ | 状態 | 概要 |
 |---|---|---|---|
-| バッチ分類 | generative-ai-addon-labeler | 🚧 開発中 | CSVデータをマスタ定義に基づきAIが自動ラベル付与（S3 Vectors + Bedrock） |
+| AIラベル付与 | generative-ai-addon-labeler | 🚧 開発中 | CSVデータをマスタ定義に基づきAIが自動ラベル付与（S3 Vectors + Bedrock） |
 
 > アドオンが追加されたらここに追記する
 
