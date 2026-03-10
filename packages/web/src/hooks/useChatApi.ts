@@ -18,6 +18,7 @@ import {
   CreateShareIdResponse,
   FindShareIdResponse,
   GetSharedChatResponse,
+  Chat,
 } from 'generative-ai-use-cases';
 import {
   LambdaClient,
@@ -48,6 +49,29 @@ const useChatApi = () => {
     },
     deleteChat: async (chatId: string) => {
       return http.delete<void>(`chats/${chatId}`);
+    },
+    deleteAllChats: async (): Promise<void> => {
+      let exclusiveStartKey: string | undefined = undefined;
+      let hasMore = true;
+
+      while (hasMore) {
+        const url: string = exclusiveStartKey
+          ? `chats?exclusiveStartKey=${exclusiveStartKey}`
+          : 'chats';
+        const res: AxiosResponse<ListChatsResponse> =
+          await http.api.get<ListChatsResponse>(url);
+        const chats = res.data.data;
+
+        // Delete all chats in this page
+        await Promise.all(
+          chats.map((chat: Chat) =>
+            http.delete<void>(`chats/${decomposeId(chat.chatId)}`)
+          )
+        );
+
+        exclusiveStartKey = res.data.lastEvaluatedKey;
+        hasMore = !!exclusiveStartKey;
+      }
     },
     listChats: () => {
       const getKey = (
@@ -106,13 +130,8 @@ const useChatApi = () => {
       const region = import.meta.env.VITE_APP_REGION;
       const userPoolId = import.meta.env.VITE_APP_USER_POOL_ID;
       const idPoolId = import.meta.env.VITE_APP_IDENTITY_POOL_ID;
-      const cognitoIdentityPoolProxyEndpoint = import.meta.env
-        .VITE_APP_COGNITO_IDENTITY_POOL_PROXY_ENDPOINT;
       const cognito = new CognitoIdentityClient({
         region,
-        ...(cognitoIdentityPoolProxyEndpoint
-          ? { endpoint: cognitoIdentityPoolProxyEndpoint }
-          : {}),
       });
       const providerName = `cognito-idp.${region}.amazonaws.com/${userPoolId}`;
       const lambda = new LambdaClient({

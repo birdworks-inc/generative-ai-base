@@ -1,4 +1,4 @@
-import { Model, ModelConfiguration } from 'generative-ai-use-cases';
+import { Model, ModelConfiguration, AgentInfo } from 'generative-ai-use-cases';
 import {
   CRI_PREFIX_PATTERN,
   modelMetadata,
@@ -87,9 +87,25 @@ const speechToSpeechModelIds: string[] = speechToSpeechModelConfigs.map(
   (model) => model.modelId
 );
 
-const agentNames: string[] = JSON.parse(import.meta.env.VITE_APP_AGENT_NAMES)
-  .map((name: string) => name.trim())
-  .filter((name: string) => name);
+// Combine builtin and custom agents
+let agents: AgentInfo[] = [];
+let agentNames: string[] = [];
+
+try {
+  const builtinAgentsJson =
+    import.meta.env.VITE_APP_BUILTIN_AGENTS_JSON || '[]';
+  const customAgentsJson = import.meta.env.VITE_APP_CUSTOM_AGENTS_JSON || '[]';
+
+  const builtinAgents = JSON.parse(builtinAgentsJson) as AgentInfo[];
+  const customAgents = JSON.parse(customAgentsJson) as AgentInfo[];
+
+  agents = [...builtinAgents, ...customAgents];
+  agentNames = agents.map((agent) => agent.displayName);
+} catch (error) {
+  console.warn('Failed to parse agents JSON:', error);
+  agents = [];
+  agentNames = [];
+}
 
 const getFlows = () => {
   try {
@@ -211,6 +227,7 @@ export const MODELS = {
   imageGenModelIds: imageGenModelIds,
   videoGenModelIds: videoGenModelIds,
   agentNames: agentNames,
+  agents: agents,
   textModels: textModels,
   imageGenModels: imageGenModels,
   videoGenModels: videoGenModels,

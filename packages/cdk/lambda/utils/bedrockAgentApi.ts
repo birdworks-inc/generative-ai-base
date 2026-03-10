@@ -21,6 +21,7 @@ import {
   BraveSearchResult,
 } from 'generative-ai-use-cases';
 import { streamingChunk } from './streamingChunk';
+import { convertToSafeFilename } from './fileNameUtils';
 import {
   initBedrockAgentClient,
   initBedrockAgentRuntimeClient,
@@ -29,12 +30,39 @@ import {
 const MODEL_REGION = process.env.MODEL_REGION as string;
 const s3Client = new S3Client({});
 
-// Agent information
-const agentMap: AgentMap = JSON.parse(process.env.AGENT_MAP || '{}');
-type AgentInfo = {
+// Agent information - create AgentMap from both agent sources at runtime
+const createAgentMap = (): AgentMap => {
+  try {
+    const builtinAgentsJson = process.env.BUILTIN_AGENTS_JSON || '[]';
+    const customAgentsJson = process.env.CUSTOM_AGENTS_JSON || '[]';
+
+    const builtinAgents = JSON.parse(builtinAgentsJson);
+    const customAgents = JSON.parse(customAgentsJson);
+    const allAgents = [...builtinAgents, ...customAgents];
+
+    const agentMap: AgentMap = {};
+
+    for (const agent of allAgents) {
+      if (agent.displayName && agent.agentId) {
+        agentMap[agent.displayName] = {
+          agentId: agent.agentId,
+          aliasId: agent.aliasId,
+        };
+      }
+    }
+
+    return agentMap;
+  } catch (error) {
+    console.warn('Failed to parse agents JSON:', error);
+    return {};
+  }
+};
+
+const agentMap: AgentMap = createAgentMap();
+type AgentConfig = {
   codeInterpreterEnabled: boolean;
 };
-const agentInfoMap: { [aliasId: string]: AgentInfo } = {};
+const agentConfigMap: { [aliasId: string]: AgentConfig } = {};
 
 // Convert s3://<BUCKET>/<PREFIX> to https://s3.<REGION>.amazonaws.com/<BUCKET>/<PREFIX>
 const convertS3UriToUrl = (s3Uri: string, region: string): string => {
@@ -59,9 +87,9 @@ const encodeUrlString = (str: string): string => {
   }
 };
 
-const getAgentInfo = async (agentId: string, agentAliasId: string) => {
+const getagentConfig = async (agentId: string, agentAliasId: string) => {
   // Get Agent Info if not cached
-  if (!agentInfoMap[agentAliasId]) {
+  if (!agentConfigMap[agentAliasId]) {
     const bedrockAgentClient = await initBedrockAgentClient({
       region: MODEL_REGION,
     });
@@ -83,13 +111,13 @@ const getAgentInfo = async (agentId: string, agentAliasId: string) => {
       })
     );
     // Cache Agent Info
-    agentInfoMap[agentAliasId] = {
+    agentConfigMap[agentAliasId] = {
       codeInterpreterEnabled: !!actionGroups.actionGroupSummaries?.find(
         (actionGroup) => actionGroup.actionGroupName === 'CodeInterpreterAction'
       ),
     };
   }
-  return agentInfoMap[agentAliasId];
+  return agentConfigMap[agentAliasId];
 };
 
 const bedrockAgentApi: ApiInterface = {
@@ -104,7 +132,7 @@ const bedrockAgentApi: ApiInterface = {
       }
       const agentId = agentMap[model.modelId].agentId;
       const agentAliasId = agentMap[model.modelId].aliasId;
-      const agentInfo = await getAgentInfo(agentId, agentAliasId);
+      const agentConfig = await getagentConfig(agentId, agentAliasId);
 
       // Invoke Agent
       const command = new InvokeAgentCommand({
@@ -127,7 +155,7 @@ const bedrockAgentApi: ApiInterface = {
           files: messages
             .flatMap((m: UnrecordedMessage) => {
               return m.extraData?.map((file) => ({
-                name: file.name.replace(/[^a-zA-Z0-9\s\-()[\].]/g, 'X'), // If the file name contains Japanese, it is not recognized, so replace it
+                name: convertToSafeFilename(file.name),
                 source: {
                   sourceType: 'BYTE_CONTENT',
                   byteContent: {
@@ -135,7 +163,7 @@ const bedrockAgentApi: ApiInterface = {
                     data: Buffer.from(file.source.data, 'base64'),
                   },
                 },
-                useCase: agentInfo.codeInterpreterEnabled
+                useCase: agentConfig.codeInterpreterEnabled
                   ? 'CODE_INTERPRETER'
                   : 'CHAT',
               })) as InputFile[] | undefined;

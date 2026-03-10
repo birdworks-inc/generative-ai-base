@@ -145,6 +145,7 @@ export class RagKnowledgeBaseStack extends Stack {
       ragKnowledgeBaseAdvancedParsingModelId,
       ragKnowledgeBaseBinaryVector,
       crossAccountBedrockRoleArn,
+      tagKey,
       tagValue,
     } = props.params;
 
@@ -312,7 +313,7 @@ export class RagKnowledgeBaseStack extends Stack {
       resourceType: 'Custom::ApplyTags',
       properties: {
         tag: {
-          key: TAG_KEY,
+          key: tagKey || TAG_KEY,
           value: tagValue || '', // Pass empty string when tagValue is unset
         },
         collectionId: collection.ref,
@@ -493,6 +494,33 @@ export class RagKnowledgeBaseStack extends Stack {
       },
       knowledgeBaseId: knowledgeBase.ref,
       name: 's3-data-source',
+    });
+
+    // Web Crawler Data Source (GenU documentation site as sample)
+    new bedrock.CfnDataSource(this, 'WebCrawlerDataSource', {
+      dataSourceConfiguration: {
+        type: 'WEB',
+        webConfiguration: {
+          sourceConfiguration: {
+            urlConfiguration: {
+              seedUrls: [
+                {
+                  url: 'https://aws-samples.github.io/generative-ai-use-cases/en/',
+                },
+              ],
+            },
+          },
+          crawlerConfiguration: {
+            crawlerLimits: {
+              rateLimit: 300,
+              maxPages: 100,
+            },
+            scope: 'HOST_ONLY',
+          },
+        },
+      },
+      knowledgeBaseId: knowledgeBase.ref,
+      name: 'web-crawler-data-source',
     });
 
     knowledgeBase.addDependency(collection);

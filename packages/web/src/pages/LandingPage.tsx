@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import CardDemo from '../components/CardDemo';
 import Button from '../components/Button';
@@ -20,9 +20,11 @@ import {
   PiPenNib,
   PiMicrophoneBold,
   PiGraph,
+  PiMagnifyingGlass,
 } from 'react-icons/pi';
 import AwsIcon from '../assets/aws.svg?react';
 import useInterUseCases from '../hooks/useInterUseCases';
+
 import {
   AgentPageQueryParams,
   ChatPageQueryParams,
@@ -50,7 +52,11 @@ const agentEnabled: boolean = import.meta.env.VITE_APP_AGENT_ENABLED === 'true';
 const agentCoreEnabled: boolean =
   import.meta.env.VITE_APP_AGENT_CORE_ENABLED === 'true';
 const inlineAgents: boolean = import.meta.env.VITE_APP_INLINE_AGENTS === 'true';
+const researchAgentEnabled: boolean =
+  import.meta.env.VITE_APP_RESEARCH_AGENT_ENABLED === 'true';
 const mcpEnabled: boolean = import.meta.env.VITE_APP_MCP_ENABLED === 'true';
+const logoPath: string = import.meta.env.VITE_APP_BRANDING_LOGO_PATH || '';
+const brandingTitle: string = import.meta.env.VITE_APP_BRANDING_TITLE || '';
 const {
   imageGenModelIds,
   videoGenModelIds,
@@ -65,6 +71,22 @@ const LandingPage: React.FC = () => {
   const { enabled } = useUseCases();
   const { setIsShow, init } = useInterUseCases();
   const { t } = useTranslation();
+
+  const displayLogo = useMemo(() => {
+    if (logoPath) {
+      const logoUrl = new URL(`../assets/${logoPath}`, import.meta.url).href;
+      return (
+        <img
+          src={logoUrl}
+          alt={brandingTitle || 'Logo'}
+          className="mr-5 size-20"
+        />
+      );
+    }
+    return <AwsIcon className="mr-5 size-20" />;
+  }, []);
+
+  const displayTitle = brandingTitle || t('landing.title');
 
   const demoChat = () => {
     const params: ChatPageQueryParams = {
@@ -102,6 +124,10 @@ const LandingPage: React.FC = () => {
 
   const demoAgentCore = () => {
     navigate(`/agent-core`);
+  };
+
+  const demoResearch = () => {
+    navigate(`/research`);
   };
 
   const demoMcp = () => {
@@ -282,8 +308,8 @@ const LandingPage: React.FC = () => {
   return (
     <div className="pb-24">
       <div className="bg-aws-squid-ink flex flex-col items-center justify-center px-3 py-5 text-xl font-semibold text-white lg:flex-row">
-        <AwsIcon className="mr-5 size-20" />
-        {t('landing.title')}
+        {displayLogo}
+        {displayTitle}
       </div>
 
       <div className="mx-3 mb-6 mt-5 flex flex-col items-center justify-center text-xs lg:flex-row">
@@ -336,6 +362,14 @@ const LandingPage: React.FC = () => {
             onClickDemo={demoAgentCore}
             icon={<PiRobot />}
             description={t('landing.use_cases.agent_core.description')}
+          />
+        )}
+        {researchAgentEnabled && (
+          <CardDemo
+            label={t('research.title')}
+            onClickDemo={demoResearch}
+            icon={<PiMagnifyingGlass />}
+            description={t('research.description')}
           />
         )}
         {mcpEnabled && (

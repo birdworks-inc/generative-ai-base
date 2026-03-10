@@ -142,21 +142,30 @@ const baseStackInputSchema = z.object({
         displayName: z.string(),
         agentId: z.string(),
         aliasId: z.string(),
+        description: z.string().default(''),
       })
     )
     .default([]),
   inlineAgents: z.boolean().default(false),
   // Agent Core Runtime
+  agentBuilderEnabled: z.boolean().default(false),
   createGenericAgentCoreRuntime: z.boolean().default(false),
   agentCoreRegion: z.string().nullish(),
+  agentCoreGatewayArns: z.array(z.string()).nullish(),
   agentCoreExternalRuntimes: z
     .array(
       z.object({
         name: z.string(),
         arn: z.string(),
+        description: z.string().default(''),
       })
     )
     .default([]),
+  // Research Agent Core Runtime
+  researchAgentEnabled: z.boolean().default(false),
+  createResearchAgentFargate: z.boolean().default(false),
+  researchAgentBraveApiKey: z.string().default(''),
+  researchAgentTavilyApiKey: z.string().default(''),
   // MCP
   mcpEnabled: z.boolean().default(false),
   // Guardrail
@@ -185,6 +194,7 @@ const baseStackInputSchema = z.object({
   // Dashboard
   dashboard: z.boolean().default(false),
   // Tag
+  tagKey: z.string().nullish(),
   tagValue: z.string().nullish(),
   // Closed network
   closedNetworkMode: z.boolean().default(false),
@@ -250,6 +260,13 @@ export const processedStackInputSchema = baseStackInputSchema.extend({
   ),
   // Processed agentCoreRegion (null -> modelRegion)
   agentCoreRegion: z.string(),
+  // Branding configuration
+  brandingConfig: z
+    .object({
+      logoPath: z.string().optional(),
+      title: z.string().optional(),
+    })
+    .optional(),
 });
 
 export type StackInput = z.infer<typeof stackInputSchema>;

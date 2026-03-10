@@ -14,6 +14,7 @@ import {
   Model,
   UnrecordedMessage,
   StrandsContentBlock,
+  AgentCoreRuntimeRequest,
 } from 'generative-ai-use-cases';
 import {
   StrandsStreamProcessor,
@@ -27,18 +28,6 @@ const region = import.meta.env.VITE_APP_REGION as string;
 const modelRegion = import.meta.env.VITE_APP_MODEL_REGION as string;
 const identityPoolId = import.meta.env.VITE_APP_IDENTITY_POOL_ID as string;
 const userPoolId = import.meta.env.VITE_APP_USER_POOL_ID as string;
-
-// Define simplified request interface for the hook
-export interface AgentCoreRuntimeRequest {
-  agentRuntimeArn: string;
-  sessionId?: string;
-  qualifier?: string;
-  system_prompt?: string; // Keep this name for backward compatibility with useAgentCore
-  prompt: string; // User prompt as string
-  previousMessages?: UnrecordedMessage[]; // Raw messages that will be converted to Strands format
-  model: Model;
-  files?: File[]; // Added support for file uploads
-}
 
 const useAgentCoreApi = (id: string) => {
   const {
@@ -59,7 +48,17 @@ const useAgentCoreApi = (id: string) => {
 
   // Process a chunk of Strands event data and add it to the assistant message
   const processChunk = useCallback(
-    (eventText: string, model: Model, processor: StrandsStreamProcessor) => {
+    (
+      eventText: string,
+      model: Model,
+      processor: StrandsStreamProcessor,
+      isResearchAgent: boolean = false
+    ) => {
+      // Set research agent flag if this is the first chunk
+      if (isResearchAgent) {
+        processor.setResearchAgent(true);
+      }
+
       const processed = processor.processEvent(eventText);
 
       if (processed) {
@@ -92,6 +91,13 @@ const useAgentCoreApi = (id: string) => {
       // Create a new stream processor for this request
       const processor = streamProcessor();
 
+      // Check if this is a research agent request
+      const isResearchAgent =
+        req.mode !== undefined &&
+        ['technical-research', 'mini-research', 'general-research'].includes(
+          req.mode
+        );
+
       try {
         pushMessage('user', req.prompt);
         pushMessage('assistant', 'Thinking...');
@@ -105,7 +111,9 @@ const useAgentCoreApi = (id: string) => {
         const clientRegion = getRegionFromArn(req.agentRuntimeArn) || region;
 
         // Create the Cognito Identity client
-        const cognito = new CognitoIdentityClient({ region });
+        const cognito = new CognitoIdentityClient({
+          region,
+        });
         const providerName = `cognito-idp.${region}.amazonaws.com/${userPoolId}`;
 
         // Create the BedrockAgentCore client with the determined region
@@ -142,10 +150,10 @@ const useAgentCoreApi = (id: string) => {
           }
         }
 
-        // Create the request with the exact schema: messages, systemPrompt, prompt, model
+        // Create the request with the exact schema: messages, systemPrompt, prompt, model, and optional fields
         const agentCoreRequest: AgentCoreRequest = {
           messages: strandsMessages,
-          systemPrompt: req.system_prompt || '',
+          system_prompt: req.system_prompt || '',
           prompt: promptBlocks,
           model: {
             type: 'bedrock',
@@ -154,7 +162,19 @@ const useAgentCoreApi = (id: string) => {
               'us.anthropic.claude-3-5-sonnet-20241022-v2:0',
             region: req.model.region || modelRegion,
           },
+          ...(req.userId && { user_id: req.userId }),
+          ...(req.mcpServers && { mcp_servers: req.mcpServers }),
+          ...(req.agentId && { agent_id: req.agentId }),
+          ...(req.sessionId && { session_id: req.sessionId }),
+          ...(req.codeExecutionEnabled !== undefined && {
+            code_execution_enabled: req.codeExecutionEnabled,
+          }),
         };
+
+        console.log(
+          'AgentCoreRequest payload:',
+          JSON.stringify(agentCoreRequest, null, 2)
+        );
 
         const commandInput: InvokeAgentRuntimeCommandInput = {
           agentRuntimeArn: req.agentRuntimeArn,
@@ -203,7 +223,12 @@ const useAgentCoreApi = (id: string) => {
                   }
 
                   if (processedText.trim()) {
-                    processChunk(processedText, req.model, processor);
+                    processChunk(
+                      processedText,
+                      req.model,
+                      processor,
+                      isResearchAgent
+                    );
                   }
                 }
               }
@@ -216,7 +241,12 @@ const useAgentCoreApi = (id: string) => {
                 processedText = buffer.substring(6);
               }
               if (processedText.trim()) {
-                processChunk(processedText, req.model, processor);
+                processChunk(
+                  processedText,
+                  req.model,
+                  processor,
+                  isResearchAgent
+                );
               }
             }
           } else {
@@ -229,7 +259,8 @@ const useAgentCoreApi = (id: string) => {
             processChunk(
               JSON.stringify(response, null, 2),
               req.model,
-              processor
+              processor,
+              isResearchAgent
             );
           }
         } else {
@@ -239,7 +270,12 @@ const useAgentCoreApi = (id: string) => {
             pushMessage('assistant', '');
             isFirstChunk = false;
           }
-          processChunk(JSON.stringify(response, null, 2), req.model, processor);
+          processChunk(
+            JSON.stringify(response, null, 2),
+            req.model,
+            processor,
+            isResearchAgent
+          );
         }
 
         // Save chat history

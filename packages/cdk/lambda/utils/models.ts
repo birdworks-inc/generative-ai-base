@@ -31,6 +31,7 @@ import {
   applyAutoCacheToSystem,
 } from './promptCache';
 import { getFormatFromMimeType, getMimeTypeFromFileName } from './media';
+import { convertToSafeFilename } from './fileNameUtils';
 
 // Default Models
 
@@ -108,6 +109,23 @@ export const defaultVideoGenerationModel: Model = {
 };
 
 // Model Params
+
+const DEFAULT_64K_DEFAULT_PARAMS: ConverseInferenceParams = {
+  inferenceConfig: {
+    maxTokens: 65536,
+    temperature: 1,
+    topP: 1,
+  },
+};
+
+const DEFAULT_128K_DEFAULT_PARAMS: ConverseInferenceParams = {
+  inferenceConfig: {
+    maxTokens: 131072,
+    temperature: 1,
+    topP: 1,
+  },
+};
+
 const CLAUDE_SONNET_4_DEFAULT_PARAMS: ConverseInferenceParams = {
   inferenceConfig: {
     maxTokens: 64000,
@@ -120,6 +138,27 @@ const CLAUDE_OPUS_4_DEFAULT_PARAMS: ConverseInferenceParams = {
     maxTokens: 32000,
     temperature: 1,
     topP: 0.999,
+  },
+};
+
+const CLAUDE_OPUS_4_5_DEFAULT_PARAMS: ConverseInferenceParams = {
+  inferenceConfig: {
+    maxTokens: 64000,
+    temperature: 1,
+  },
+};
+
+const CLAUDE_OPUS_4_6_DEFAULT_PARAMS: ConverseInferenceParams = {
+  inferenceConfig: {
+    maxTokens: 128000,
+    temperature: 1,
+  },
+};
+
+const CLAUDE_SONNET_4_6_DEFAULT_PARAMS: ConverseInferenceParams = {
+  inferenceConfig: {
+    maxTokens: 64000,
+    temperature: 1,
   },
 };
 
@@ -198,11 +237,50 @@ const NOVA_DEFAULT_PARAMS: ConverseInferenceParams = {
   },
 };
 
+const NOVA_2_DEFAULT_PARAMS: ConverseInferenceParams = {
+  inferenceConfig: {
+    maxTokens: 65535,
+    temperature: 1,
+  },
+  // There are no additional costs for cache writes with Amazon Nova models
+  promptCachingConfig: {
+    autoCacheFields: {
+      system: true,
+      messages: true,
+    },
+  },
+};
+
 const DEEPSEEK_DEFAULT_PARAMS: ConverseInferenceParams = {
   inferenceConfig: {
     maxTokens: 32768,
     temperature: 0.6,
     topP: 0.95,
+  },
+};
+
+// Qwen3 model parameters based on actual AWS Bedrock limits
+const QWEN_16K_DEFAULT_PARAMS: ConverseInferenceParams = {
+  inferenceConfig: {
+    maxTokens: 16384,
+    temperature: 0.7,
+    topP: 0.9,
+  },
+};
+
+const QWEN_64K_DEFAULT_PARAMS: ConverseInferenceParams = {
+  inferenceConfig: {
+    maxTokens: 65536,
+    temperature: 0.7,
+    topP: 0.9,
+  },
+};
+
+const QWEN_192K_DEFAULT_PARAMS: ConverseInferenceParams = {
+  inferenceConfig: {
+    maxTokens: 196608,
+    temperature: 0.7,
+    topP: 0.9,
   },
 };
 
@@ -403,9 +481,7 @@ const createConverseCommandInput = (
           contentBlocks.push({
             document: {
               format,
-              name: extra.name
-                .split('.')[0]
-                .replace(/[^a-zA-Z0-9\s\-()[\]]/g, 'X'), // If the file name contains Japanese, it will cause an error, so convert it
+              name: convertToSafeFilename(extra.name),
               source: {
                 bytes: Buffer.from(extra.source.data, 'base64'),
               },
@@ -474,7 +550,8 @@ const createConverseCommandInput = (
 
   if (
     modelMetadata[model.modelId].flags.reasoning &&
-    model.modelParameters?.reasoningConfig?.type === 'enabled'
+    (model.modelParameters?.reasoningConfig?.type === 'enabled' ||
+      model.modelParameters?.reasoningConfig?.type === 'adaptive')
   ) {
     converseCommandInput.inferenceConfig = {
       ...params.inferenceConfig,
@@ -482,13 +559,26 @@ const createConverseCommandInput = (
       topP: undefined, // reasoning does not require topP
       maxTokens: params.inferenceConfig?.maxTokens,
     };
-    converseCommandInput.additionalModelRequestFields = {
-      reasoning_config: {
-        type: model.modelParameters?.reasoningConfig?.type,
-        budget_tokens:
-          model.modelParameters?.reasoningConfig?.budgetTokens || 0,
-      },
-    };
+
+    if (model.modelParameters?.reasoningConfig?.type === 'adaptive') {
+      // Adaptive thinking (Claude Opus 4.6+)
+      // https://docs.aws.amazon.com/bedrock/latest/userguide/claude-messages-adaptive-thinking.html
+      converseCommandInput.additionalModelRequestFields = {
+        thinking: { type: 'adaptive' },
+        output_config: {
+          effort: model.modelParameters?.reasoningConfig?.effort || 'high',
+        },
+      };
+    } else {
+      // Extended thinking (legacy: Claude 3.7 Sonnet, Claude 4/4.1/4.5)
+      converseCommandInput.additionalModelRequestFields = {
+        reasoning_config: {
+          type: model.modelParameters?.reasoningConfig?.type,
+          budget_tokens:
+            model.modelParameters?.reasoningConfig?.budgetTokens || 0,
+        },
+      };
+    }
   }
 
   return converseCommandInput;
@@ -934,6 +1024,86 @@ export const BEDROCK_TEXT_GEN_MODELS: {
     extractConverseStreamOutput: (body: ConverseStreamOutput) => StreamingChunk;
   };
 } = {
+  'global.anthropic.claude-opus-4-6-v1': {
+    defaultParams: CLAUDE_OPUS_4_6_DEFAULT_PARAMS,
+    usecaseParams: USECASE_DEFAULT_PARAMS,
+    createConverseCommandInput: createConverseCommandInput,
+    createConverseStreamCommandInput: createConverseStreamCommandInput,
+    extractConverseOutput: extractConverseOutput,
+    extractConverseStreamOutput: extractConverseStreamOutput,
+  },
+  'us.anthropic.claude-opus-4-6-v1': {
+    defaultParams: CLAUDE_OPUS_4_6_DEFAULT_PARAMS,
+    usecaseParams: USECASE_DEFAULT_PARAMS,
+    createConverseCommandInput: createConverseCommandInput,
+    createConverseStreamCommandInput: createConverseStreamCommandInput,
+    extractConverseOutput: extractConverseOutput,
+    extractConverseStreamOutput: extractConverseStreamOutput,
+  },
+  'au.anthropic.claude-opus-4-6-v1': {
+    defaultParams: CLAUDE_OPUS_4_6_DEFAULT_PARAMS,
+    usecaseParams: USECASE_DEFAULT_PARAMS,
+    createConverseCommandInput: createConverseCommandInput,
+    createConverseStreamCommandInput: createConverseStreamCommandInput,
+    extractConverseOutput: extractConverseOutput,
+    extractConverseStreamOutput: extractConverseStreamOutput,
+  },
+  'eu.anthropic.claude-opus-4-6-v1': {
+    defaultParams: CLAUDE_OPUS_4_6_DEFAULT_PARAMS,
+    usecaseParams: USECASE_DEFAULT_PARAMS,
+    createConverseCommandInput: createConverseCommandInput,
+    createConverseStreamCommandInput: createConverseStreamCommandInput,
+    extractConverseOutput: extractConverseOutput,
+    extractConverseStreamOutput: extractConverseStreamOutput,
+  },
+  'global.anthropic.claude-sonnet-4-6': {
+    defaultParams: CLAUDE_SONNET_4_6_DEFAULT_PARAMS,
+    usecaseParams: USECASE_DEFAULT_PARAMS,
+    createConverseCommandInput: createConverseCommandInput,
+    createConverseStreamCommandInput: createConverseStreamCommandInput,
+    extractConverseOutput: extractConverseOutput,
+    extractConverseStreamOutput: extractConverseStreamOutput,
+  },
+  'us.anthropic.claude-sonnet-4-6': {
+    defaultParams: CLAUDE_SONNET_4_6_DEFAULT_PARAMS,
+    usecaseParams: USECASE_DEFAULT_PARAMS,
+    createConverseCommandInput: createConverseCommandInput,
+    createConverseStreamCommandInput: createConverseStreamCommandInput,
+    extractConverseOutput: extractConverseOutput,
+    extractConverseStreamOutput: extractConverseStreamOutput,
+  },
+  'eu.anthropic.claude-sonnet-4-6': {
+    defaultParams: CLAUDE_SONNET_4_6_DEFAULT_PARAMS,
+    usecaseParams: USECASE_DEFAULT_PARAMS,
+    createConverseCommandInput: createConverseCommandInput,
+    createConverseStreamCommandInput: createConverseStreamCommandInput,
+    extractConverseOutput: extractConverseOutput,
+    extractConverseStreamOutput: extractConverseStreamOutput,
+  },
+  'au.anthropic.claude-sonnet-4-6': {
+    defaultParams: CLAUDE_SONNET_4_6_DEFAULT_PARAMS,
+    usecaseParams: USECASE_DEFAULT_PARAMS,
+    createConverseCommandInput: createConverseCommandInput,
+    createConverseStreamCommandInput: createConverseStreamCommandInput,
+    extractConverseOutput: extractConverseOutput,
+    extractConverseStreamOutput: extractConverseStreamOutput,
+  },
+  'jp.anthropic.claude-sonnet-4-6': {
+    defaultParams: CLAUDE_SONNET_4_6_DEFAULT_PARAMS,
+    usecaseParams: USECASE_DEFAULT_PARAMS,
+    createConverseCommandInput: createConverseCommandInput,
+    createConverseStreamCommandInput: createConverseStreamCommandInput,
+    extractConverseOutput: extractConverseOutput,
+    extractConverseStreamOutput: extractConverseStreamOutput,
+  },
+  'us.anthropic.claude-opus-4-5-20251101-v1:0': {
+    defaultParams: CLAUDE_OPUS_4_5_DEFAULT_PARAMS,
+    usecaseParams: USECASE_DEFAULT_PARAMS,
+    createConverseCommandInput: createConverseCommandInput,
+    createConverseStreamCommandInput: createConverseStreamCommandInput,
+    extractConverseOutput: extractConverseOutput,
+    extractConverseStreamOutput: extractConverseStreamOutput,
+  },
   'us.anthropic.claude-opus-4-1-20250805-v1:0': {
     defaultParams: CLAUDE_OPUS_4_DEFAULT_PARAMS,
     usecaseParams: USECASE_DEFAULT_PARAMS,
@@ -944,6 +1114,14 @@ export const BEDROCK_TEXT_GEN_MODELS: {
   },
   'us.anthropic.claude-opus-4-20250514-v1:0': {
     defaultParams: CLAUDE_OPUS_4_DEFAULT_PARAMS,
+    usecaseParams: USECASE_DEFAULT_PARAMS,
+    createConverseCommandInput: createConverseCommandInput,
+    createConverseStreamCommandInput: createConverseStreamCommandInput,
+    extractConverseOutput: extractConverseOutput,
+    extractConverseStreamOutput: extractConverseStreamOutput,
+  },
+  'global.anthropic.claude-opus-4-5-20251101-v1:0': {
+    defaultParams: CLAUDE_OPUS_4_5_DEFAULT_PARAMS,
     usecaseParams: USECASE_DEFAULT_PARAMS,
     createConverseCommandInput: createConverseCommandInput,
     createConverseStreamCommandInput: createConverseStreamCommandInput,
@@ -975,6 +1153,38 @@ export const BEDROCK_TEXT_GEN_MODELS: {
     extractConverseStreamOutput: extractConverseStreamOutput,
   },
   'jp.anthropic.claude-sonnet-4-5-20250929-v1:0': {
+    defaultParams: CLAUDE_SONNET_4_DEFAULT_PARAMS,
+    usecaseParams: USECASE_DEFAULT_PARAMS,
+    createConverseCommandInput: createConverseCommandInput,
+    createConverseStreamCommandInput: createConverseStreamCommandInput,
+    extractConverseOutput: extractConverseOutput,
+    extractConverseStreamOutput: extractConverseStreamOutput,
+  },
+  'global.anthropic.claude-haiku-4-5-20251001-v1:0': {
+    defaultParams: CLAUDE_SONNET_4_DEFAULT_PARAMS,
+    usecaseParams: USECASE_DEFAULT_PARAMS,
+    createConverseCommandInput: createConverseCommandInput,
+    createConverseStreamCommandInput: createConverseStreamCommandInput,
+    extractConverseOutput: extractConverseOutput,
+    extractConverseStreamOutput: extractConverseStreamOutput,
+  },
+  'us.anthropic.claude-haiku-4-5-20251001-v1:0': {
+    defaultParams: CLAUDE_SONNET_4_DEFAULT_PARAMS,
+    usecaseParams: USECASE_DEFAULT_PARAMS,
+    createConverseCommandInput: createConverseCommandInput,
+    createConverseStreamCommandInput: createConverseStreamCommandInput,
+    extractConverseOutput: extractConverseOutput,
+    extractConverseStreamOutput: extractConverseStreamOutput,
+  },
+  'eu.anthropic.claude-haiku-4-5-20251001-v1:0': {
+    defaultParams: CLAUDE_SONNET_4_DEFAULT_PARAMS,
+    usecaseParams: USECASE_DEFAULT_PARAMS,
+    createConverseCommandInput: createConverseCommandInput,
+    createConverseStreamCommandInput: createConverseStreamCommandInput,
+    extractConverseOutput: extractConverseOutput,
+    extractConverseStreamOutput: extractConverseStreamOutput,
+  },
+  'jp.anthropic.claude-haiku-4-5-20251001-v1:0': {
     defaultParams: CLAUDE_SONNET_4_DEFAULT_PARAMS,
     usecaseParams: USECASE_DEFAULT_PARAMS,
     createConverseCommandInput: createConverseCommandInput,
@@ -1362,6 +1572,46 @@ export const BEDROCK_TEXT_GEN_MODELS: {
     extractConverseOutput: extractConverseOutput,
     extractConverseStreamOutput: extractConverseStreamOutput,
   },
+  'mistral.mistral-large-3-675b-instruct': {
+    defaultParams: DEFAULT_128K_DEFAULT_PARAMS,
+    usecaseParams: USECASE_DEFAULT_PARAMS,
+    createConverseCommandInput: createConverseCommandInput,
+    createConverseStreamCommandInput: createConverseStreamCommandInput,
+    extractConverseOutput: extractConverseOutput,
+    extractConverseStreamOutput: extractConverseStreamOutput,
+  },
+  'mistral.ministral-3-3b-instruct': {
+    defaultParams: DEFAULT_128K_DEFAULT_PARAMS,
+    usecaseParams: USECASE_DEFAULT_PARAMS,
+    createConverseCommandInput: createConverseCommandInput,
+    createConverseStreamCommandInput: createConverseStreamCommandInput,
+    extractConverseOutput: extractConverseOutput,
+    extractConverseStreamOutput: extractConverseStreamOutput,
+  },
+  'mistral.ministral-3-8b-instruct': {
+    defaultParams: DEFAULT_128K_DEFAULT_PARAMS,
+    usecaseParams: USECASE_DEFAULT_PARAMS,
+    createConverseCommandInput: createConverseCommandInput,
+    createConverseStreamCommandInput: createConverseStreamCommandInput,
+    extractConverseOutput: extractConverseOutput,
+    extractConverseStreamOutput: extractConverseStreamOutput,
+  },
+  'mistral.ministral-3-14b-instruct': {
+    defaultParams: DEFAULT_128K_DEFAULT_PARAMS,
+    usecaseParams: USECASE_DEFAULT_PARAMS,
+    createConverseCommandInput: createConverseCommandInput,
+    createConverseStreamCommandInput: createConverseStreamCommandInput,
+    extractConverseOutput: extractConverseOutput,
+    extractConverseStreamOutput: extractConverseStreamOutput,
+  },
+  'mistral.magistral-small-2509': {
+    defaultParams: DEFAULT_64K_DEFAULT_PARAMS,
+    usecaseParams: USECASE_DEFAULT_PARAMS,
+    createConverseCommandInput: createConverseCommandInput,
+    createConverseStreamCommandInput: createConverseStreamCommandInput,
+    extractConverseOutput: extractConverseOutput,
+    extractConverseStreamOutput: extractConverseStreamOutput,
+  },
   'cohere.command-r-v1:0': {
     defaultParams: COMMANDR_DEFAULT_PARAMS,
     usecaseParams: USECASE_DEFAULT_PARAMS,
@@ -1435,6 +1685,14 @@ export const BEDROCK_TEXT_GEN_MODELS: {
     extractConverseOutput: extractConverseOutput,
     extractConverseStreamOutput: extractConverseStreamOutput,
   },
+  'us.amazon.nova-2-lite-v1:0': {
+    defaultParams: NOVA_2_DEFAULT_PARAMS,
+    usecaseParams: USECASE_DEFAULT_PARAMS,
+    createConverseCommandInput: createConverseCommandInput,
+    createConverseStreamCommandInput: createConverseStreamCommandInput,
+    extractConverseOutput: extractConverseOutput,
+    extractConverseStreamOutput: extractConverseStreamOutput,
+  },
   'eu.amazon.nova-pro-v1:0': {
     defaultParams: NOVA_DEFAULT_PARAMS,
     usecaseParams: USECASE_DEFAULT_PARAMS,
@@ -1483,8 +1741,80 @@ export const BEDROCK_TEXT_GEN_MODELS: {
     extractConverseOutput: extractConverseOutput,
     extractConverseStreamOutput: extractConverseStreamOutput,
   },
+  'jp.amazon.nova-2-lite-v1:0': {
+    defaultParams: NOVA_2_DEFAULT_PARAMS,
+    usecaseParams: USECASE_DEFAULT_PARAMS,
+    createConverseCommandInput: createConverseCommandInput,
+    createConverseStreamCommandInput: createConverseStreamCommandInput,
+    extractConverseOutput: extractConverseOutput,
+    extractConverseStreamOutput: extractConverseStreamOutput,
+  },
+  'global.amazon.nova-2-lite-v1:0': {
+    defaultParams: NOVA_2_DEFAULT_PARAMS,
+    usecaseParams: USECASE_DEFAULT_PARAMS,
+    createConverseCommandInput: createConverseCommandInput,
+    createConverseStreamCommandInput: createConverseStreamCommandInput,
+    extractConverseOutput: extractConverseOutput,
+    extractConverseStreamOutput: extractConverseStreamOutput,
+  },
+  'deepseek.v3-v1:0': {
+    defaultParams: DEEPSEEK_DEFAULT_PARAMS,
+    usecaseParams: USECASE_DEFAULT_PARAMS,
+    createConverseCommandInput: createConverseCommandInput,
+    createConverseStreamCommandInput: createConverseStreamCommandInput,
+    extractConverseOutput: extractConverseOutput,
+    extractConverseStreamOutput: extractConverseStreamOutput,
+  },
   'us.deepseek.r1-v1:0': {
     defaultParams: DEEPSEEK_DEFAULT_PARAMS,
+    usecaseParams: USECASE_DEFAULT_PARAMS,
+    createConverseCommandInput: createConverseCommandInput,
+    createConverseStreamCommandInput: createConverseStreamCommandInput,
+    extractConverseOutput: extractConverseOutput,
+    extractConverseStreamOutput: extractConverseStreamOutput,
+  },
+  'qwen.qwen3-235b-a22b-2507-v1:0': {
+    defaultParams: QWEN_192K_DEFAULT_PARAMS,
+    usecaseParams: USECASE_DEFAULT_PARAMS,
+    createConverseCommandInput: createConverseCommandInput,
+    createConverseStreamCommandInput: createConverseStreamCommandInput,
+    extractConverseOutput: extractConverseOutput,
+    extractConverseStreamOutput: extractConverseStreamOutput,
+  },
+  'qwen.qwen3-32b-v1:0': {
+    defaultParams: QWEN_16K_DEFAULT_PARAMS,
+    usecaseParams: USECASE_DEFAULT_PARAMS,
+    createConverseCommandInput: createConverseCommandInput,
+    createConverseStreamCommandInput: createConverseStreamCommandInput,
+    extractConverseOutput: extractConverseOutput,
+    extractConverseStreamOutput: extractConverseStreamOutput,
+  },
+  'qwen.qwen3-coder-480b-a35b-v1:0': {
+    defaultParams: QWEN_64K_DEFAULT_PARAMS,
+    usecaseParams: USECASE_DEFAULT_PARAMS,
+    createConverseCommandInput: createConverseCommandInput,
+    createConverseStreamCommandInput: createConverseStreamCommandInput,
+    extractConverseOutput: extractConverseOutput,
+    extractConverseStreamOutput: extractConverseStreamOutput,
+  },
+  'qwen.qwen3-coder-30b-a3b-v1:0': {
+    defaultParams: QWEN_192K_DEFAULT_PARAMS,
+    usecaseParams: USECASE_DEFAULT_PARAMS,
+    createConverseCommandInput: createConverseCommandInput,
+    createConverseStreamCommandInput: createConverseStreamCommandInput,
+    extractConverseOutput: extractConverseOutput,
+    extractConverseStreamOutput: extractConverseStreamOutput,
+  },
+  'qwen.qwen3-next-80b-a3b': {
+    defaultParams: DEFAULT_128K_DEFAULT_PARAMS,
+    usecaseParams: USECASE_DEFAULT_PARAMS,
+    createConverseCommandInput: createConverseCommandInput,
+    createConverseStreamCommandInput: createConverseStreamCommandInput,
+    extractConverseOutput: extractConverseOutput,
+    extractConverseStreamOutput: extractConverseStreamOutput,
+  },
+  'qwen.qwen3-vl-235b-a22b': {
+    defaultParams: DEFAULT_128K_DEFAULT_PARAMS,
     usecaseParams: USECASE_DEFAULT_PARAMS,
     createConverseCommandInput: createConverseCommandInput,
     createConverseStreamCommandInput: createConverseStreamCommandInput,
@@ -1521,6 +1851,82 @@ export const BEDROCK_TEXT_GEN_MODELS: {
   },
   'openai.gpt-oss-20b-1:0': {
     defaultParams: OPENAI_DEFAULT_PARAMS,
+    usecaseParams: USECASE_DEFAULT_PARAMS,
+    createConverseCommandInput: createConverseCommandInputWithoutSystemContext,
+    createConverseStreamCommandInput:
+      createConverseStreamCommandInputWithoutSystemContext,
+    extractConverseOutput: extractConverseOutput,
+    extractConverseStreamOutput: extractConverseStreamOutput,
+  },
+  'google.gemma-3-4b-it': {
+    defaultParams: DEFAULT_64K_DEFAULT_PARAMS,
+    usecaseParams: USECASE_DEFAULT_PARAMS,
+    createConverseCommandInput: createConverseCommandInputWithoutSystemContext,
+    createConverseStreamCommandInput:
+      createConverseStreamCommandInputWithoutSystemContext,
+    extractConverseOutput: extractConverseOutput,
+    extractConverseStreamOutput: extractConverseStreamOutput,
+  },
+  'google.gemma-3-12b-it': {
+    defaultParams: DEFAULT_64K_DEFAULT_PARAMS,
+    usecaseParams: USECASE_DEFAULT_PARAMS,
+    createConverseCommandInput: createConverseCommandInputWithoutSystemContext,
+    createConverseStreamCommandInput:
+      createConverseStreamCommandInputWithoutSystemContext,
+    extractConverseOutput: extractConverseOutput,
+    extractConverseStreamOutput: extractConverseStreamOutput,
+  },
+  'google.gemma-3-27b-it': {
+    defaultParams: DEFAULT_64K_DEFAULT_PARAMS,
+    usecaseParams: USECASE_DEFAULT_PARAMS,
+    createConverseCommandInput: createConverseCommandInputWithoutSystemContext,
+    createConverseStreamCommandInput:
+      createConverseStreamCommandInputWithoutSystemContext,
+    extractConverseOutput: extractConverseOutput,
+    extractConverseStreamOutput: extractConverseStreamOutput,
+  },
+  // MiniMax AI
+  'minimax.minimax-m2': {
+    // Max output token set to 128K since context length 196K
+    defaultParams: DEFAULT_128K_DEFAULT_PARAMS,
+    usecaseParams: USECASE_DEFAULT_PARAMS,
+    createConverseCommandInput: createConverseCommandInputWithoutSystemContext,
+    createConverseStreamCommandInput:
+      createConverseStreamCommandInputWithoutSystemContext,
+    extractConverseOutput: extractConverseOutput,
+    extractConverseStreamOutput: extractConverseStreamOutput,
+  },
+  // Moonshot AI
+  'moonshot.kimi-k2-thinking': {
+    defaultParams: DEFAULT_128K_DEFAULT_PARAMS,
+    usecaseParams: USECASE_DEFAULT_PARAMS,
+    createConverseCommandInput: createConverseCommandInputWithoutSystemContext,
+    createConverseStreamCommandInput:
+      createConverseStreamCommandInputWithoutSystemContext,
+    extractConverseOutput: extractConverseOutput,
+    extractConverseStreamOutput: extractConverseStreamOutput,
+  },
+  // NVIDIA
+  'nvidia.nemotron-nano-9b-v2': {
+    defaultParams: DEFAULT_64K_DEFAULT_PARAMS,
+    usecaseParams: USECASE_DEFAULT_PARAMS,
+    createConverseCommandInput: createConverseCommandInputWithoutSystemContext,
+    createConverseStreamCommandInput:
+      createConverseStreamCommandInputWithoutSystemContext,
+    extractConverseOutput: extractConverseOutput,
+    extractConverseStreamOutput: extractConverseStreamOutput,
+  },
+  'nvidia.nemotron-nano-12b-v2': {
+    defaultParams: DEFAULT_64K_DEFAULT_PARAMS,
+    usecaseParams: USECASE_DEFAULT_PARAMS,
+    createConverseCommandInput: createConverseCommandInputWithoutSystemContext,
+    createConverseStreamCommandInput:
+      createConverseStreamCommandInputWithoutSystemContext,
+    extractConverseOutput: extractConverseOutput,
+    extractConverseStreamOutput: extractConverseStreamOutput,
+  },
+  'nvidia.nemotron-nano-3-30b': {
+    defaultParams: DEFAULT_128K_DEFAULT_PARAMS,
     usecaseParams: USECASE_DEFAULT_PARAMS,
     createConverseCommandInput: createConverseCommandInputWithoutSystemContext,
     createConverseStreamCommandInput:

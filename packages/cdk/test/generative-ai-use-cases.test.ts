@@ -2,6 +2,15 @@ import { Template } from 'aws-cdk-lib/assertions';
 import * as cdk from 'aws-cdk-lib';
 import { processedStackInputSchema, StackInput } from '../lib/stack-input';
 import { createStacks } from '../lib/create-stacks';
+import {
+  BUNDLING_STACKS,
+  DISABLE_ASSET_STAGING_CONTEXT,
+} from 'aws-cdk-lib/cx-api';
+
+const appContext = {
+  [BUNDLING_STACKS]: [],
+  [DISABLE_ASSET_STAGING_CONTEXT]: true,
+};
 
 describe('GenerativeAiUseCases', () => {
   const stackInput: Partial<StackInput> = {
@@ -49,6 +58,7 @@ describe('GenerativeAiUseCases', () => {
     agents: [],
     flows: [],
     createGenericAgentCoreRuntime: true,
+    agentBuilderEnabled: true,
     agentCoreRegion: 'us-east-1',
     agentCoreExternalRuntimes: [],
     allowedIpV4AddressRanges: null,
@@ -62,10 +72,14 @@ describe('GenerativeAiUseCases', () => {
     guardrailEnabled: true,
     crossAccountBedrockRoleArn: '',
     useCaseBuilderEnabled: true,
+    tagKey: null,
+    tagValue: null,
   };
 
   test('matches the snapshot', () => {
-    const app = new cdk.App();
+    const app = new cdk.App({
+      context: appContext,
+    });
 
     const params = processedStackInputSchema.parse(stackInput);
 
@@ -74,7 +88,7 @@ describe('GenerativeAiUseCases', () => {
       ragKnowledgeBaseStack,
       agentStack,
       agentCoreStack,
-      guardrail,
+      guardrailStack,
       generativeAiUseCasesStack,
       dashboardStack,
     } = createStacks(app, params);
@@ -85,7 +99,7 @@ describe('GenerativeAiUseCases', () => {
       !ragKnowledgeBaseStack ||
       !agentStack ||
       !agentCoreStack ||
-      !guardrail ||
+      !guardrailStack ||
       !generativeAiUseCasesStack ||
       !dashboardStack
     ) {
@@ -95,7 +109,7 @@ describe('GenerativeAiUseCases', () => {
     const ragKnowledgeBaseTemplate = Template.fromStack(ragKnowledgeBaseStack);
     const agentTemplate = Template.fromStack(agentStack);
     const agentCoreTemplate = Template.fromStack(agentCoreStack);
-    const guardrailTemplate = Template.fromStack(guardrail);
+    const guardrailTemplate = Template.fromStack(guardrailStack);
     const generativeAiUseCasesTemplate = Template.fromStack(
       generativeAiUseCasesStack
     );
@@ -112,7 +126,9 @@ describe('GenerativeAiUseCases', () => {
   });
 
   test('matches the snapshot (closed network mode)', () => {
-    const app = new cdk.App();
+    const app = new cdk.App({
+      context: appContext,
+    });
 
     const params = processedStackInputSchema.parse({
       ...stackInput,
@@ -124,7 +140,7 @@ describe('GenerativeAiUseCases', () => {
       ragKnowledgeBaseStack,
       agentStack,
       agentCoreStack,
-      guardrail,
+      guardrailStack,
       generativeAiUseCasesStack,
       dashboardStack,
     } = createStacks(app, params);
@@ -135,7 +151,7 @@ describe('GenerativeAiUseCases', () => {
       !ragKnowledgeBaseStack ||
       !agentStack ||
       !agentCoreStack ||
-      !guardrail ||
+      !guardrailStack ||
       !generativeAiUseCasesStack ||
       !dashboardStack
     ) {
@@ -145,7 +161,7 @@ describe('GenerativeAiUseCases', () => {
     const ragKnowledgeBaseTemplate = Template.fromStack(ragKnowledgeBaseStack);
     const agentTemplate = Template.fromStack(agentStack);
     const agentCoreTemplate = Template.fromStack(agentCoreStack);
-    const guardrailTemplate = Template.fromStack(guardrail);
+    const guardrailTemplate = Template.fromStack(guardrailStack);
     const generativeAiUseCasesTemplate = Template.fromStack(
       generativeAiUseCasesStack
     );
@@ -159,5 +175,55 @@ describe('GenerativeAiUseCases', () => {
     expect(guardrailTemplate.toJSON()).toMatchSnapshot();
     expect(generativeAiUseCasesTemplate.toJSON()).toMatchSnapshot();
     expect(dashboardTemplate.toJSON()).toMatchSnapshot();
+  });
+
+  test('tagKey functionality', () => {
+    // Test with custom tagKey
+    const appWithCustomTag = new cdk.App({
+      context: appContext,
+    });
+    const paramsWithCustomTag = processedStackInputSchema.parse({
+      ...stackInput,
+      tagKey: 'CustomTag',
+      tagValue: 'custom-value',
+    });
+
+    const stacksWithCustomTag = createStacks(
+      appWithCustomTag,
+      paramsWithCustomTag
+    );
+
+    // Test without tagKey (should use default)
+    const appWithoutTagKey = new cdk.App({
+      context: appContext,
+    });
+    const paramsWithoutTagKey = processedStackInputSchema.parse({
+      ...stackInput,
+      tagKey: null,
+      tagValue: 'default-value',
+    });
+
+    const stacksWithoutTagKey = createStacks(
+      appWithoutTagKey,
+      paramsWithoutTagKey
+    );
+
+    // Assert that both scenarios create stacks successfully
+    expect(stacksWithCustomTag.generativeAiUseCasesStack).toBeDefined();
+    expect(stacksWithoutTagKey.generativeAiUseCasesStack).toBeDefined();
+
+    // Test that RagKnowledgeBaseStack is created properly with custom tagKey
+    if (stacksWithCustomTag.ragKnowledgeBaseStack) {
+      const customTagTemplate = Template.fromStack(
+        stacksWithCustomTag.ragKnowledgeBaseStack
+      );
+      // Check that custom resource uses the custom tag key
+      customTagTemplate.hasResourceProperties('Custom::ApplyTags', {
+        tag: {
+          key: 'CustomTag',
+          value: 'custom-value',
+        },
+      });
+    }
   });
 });
