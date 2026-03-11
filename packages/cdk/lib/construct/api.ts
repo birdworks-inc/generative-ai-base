@@ -76,6 +76,7 @@ export interface BackendApiProps {
 
 export class Api extends Construct {
   readonly api: RestApi;
+  readonly authorizer: CognitoUserPoolsAuthorizer;
   readonly predictStreamFunction: NodejsFunction;
   readonly invokeFlowFunction: NodejsFunction;
   readonly optimizePromptFunction: NodejsFunction;
@@ -837,6 +838,7 @@ export class Api extends Construct {
     const authorizer = new CognitoUserPoolsAuthorizer(this, 'Authorizer', {
       cognitoUserPools: [userPool],
     });
+    this.authorizer = authorizer;
 
     const commonAuthorizerProps = {
       authorizationType: AuthorizationType.COGNITO,
