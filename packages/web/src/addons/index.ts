@@ -1,4 +1,4 @@
-// アドオンをここで登録する
-// 例：
-// import { LabelerAddon } from 'generative-ai-addon-labeler'
-// addonRegistry.push(LabelerAddon)
+import { addonRegistry } from './registry'
+import { LabelerAddon } from '@birdworks/genu-addon-labeler-web'
+
+addonRegistry.push(LabelerAddon)
