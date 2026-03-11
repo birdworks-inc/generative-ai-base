@@ -287,7 +287,7 @@ const App: React.FC = () => {
     ...addonRegistry.map((addon) => ({
       label: addon.label,
       to: addon.to,
-      icon: addon.icon,
+      icon: addon.icon ?? <PiGear />,
       display: addon.display,
     })),
   ].flatMap((i) => (i !== null ? [i] : []));
