@@ -67,7 +67,7 @@ packages/web/src/addons/
 export interface AddonDefinition {
   id: string
   label: string                              // サイドバーのメニュー名
-  icon: React.ReactNode
+  icon: JSX.Element | null                   // nullの場合はデフォルトアイコンにフォールバック
   path: string                               // /addons/{name}
   component: React.LazyExoticComponent<any>
 }
@@ -84,12 +84,76 @@ export const addonRegistry: AddonDefinition[] = []
 
 ```typescript
 // packages/web/src/addons/index.ts（クライアントリポジトリ側）
-import { addonRegistry } from '../addons/registry'
-import { LabelerAddon } from 'generative-ai-addon-labeler'
+import { addonRegistry } from './registry'
+import { LabelerAddon } from '@birdworks/genu-addon-labeler-web'
 
 addonRegistry.push(LabelerAddon)   // オン
-// addonRegistry.push(XxxAddon)            // オフ（コメントアウト）
+// addonRegistry.push(XxxAddon)    // オフ（コメントアウト）
 ```
+
+---
+
+## アドオンのCDK統合（Authorizer共有設計）
+
+### 背景
+アドオンのAPIエンドポイントをGenU既存のAPI Gatewayに追加する際、認証（Authorizer）をどう扱うかを検討した。
+
+**採用した方針：GenU側のAuthorizerを共有する**
+
+```typescript
+// packages/cdk/lib/construct/api.ts（GenU本体）に追加
+export class Api extends Construct {
+  readonly api: RestApi;
+  readonly authorizer: CognitoUserPoolsAuthorizer;  // ← エクスポート追加
+  ...
+}
+
+// packages/cdk/lib/generative-ai-use-cases-stack.ts に追加
+export class GenerativeAiUseCasesStack extends Stack {
+  public readonly backendApi: Api;  // ← エクスポート追加
+  ...
+}
+
+// packages/cdk/lib/create-stacks.ts でアドオンスタックに渡す
+new LabelerStack(app, 'LabelerStack', {
+  restApi: generativeAiUseCasesStack.backendApi.api,
+  authorizer: generativeAiUseCasesStack.backendApi.authorizer,  // ← 共有
+  bedrockRegion: updatedParams.modelRegion,
+});
+```
+
+### なぜ共有するのか
+アドオンが独自にAuthorizerを作成する方法（`userPool`を受け取って自前で作る）も可能だが、アドオンが増えるたびにAuthorizerが増えていく。同じUserPoolを参照する冗長なリソースが累積するため、GenU側のAuthorizerを共有する設計を採用した。
+
+| 方式 | GenU本体への変更 | アドオン増加時 |
+|---|---|---|
+| 独自Authorizer作成 | なし | アドオン数分だけ増加 |
+| **GenU側を共有（採用）** | `api.ts` に1行追加 | 常に1つ |
+
+### GenU本体への変更箇所（2ファイル・最小限）
+- `packages/cdk/lib/construct/api.ts`：`readonly authorizer` をエクスポート・`this.authorizer = authorizer` を追加
+- `packages/cdk/lib/generative-ai-use-cases-stack.ts`：`public readonly backendApi: Api` をエクスポート・`this.backendApi = api` を追加
+
+---
+
+## アドオンのnpm workspaces統合
+
+アドオンのCDK・LambdaパッケージはGenUベースの `node_modules` を共有するため、`generative-ai-base/package.json` のworkspacesに追加する。
+
+```json
+// generative-ai-base/package.json
+{
+  "workspaces": [
+    "packages/*",
+    "../generative-ai-addon-labeler/packages/cdk",
+    "../generative-ai-addon-labeler/packages/lambda"
+  ]
+}
+```
+
+これにより `aws-cdk-lib` 等の依存関係がbase側の `node_modules` に統一され、バンドルエラーが解消される。
+
+**新しいアドオンを追加する際は同様にworkspacesへの追記が必要。**
 
 ---
 
@@ -97,7 +161,7 @@ addonRegistry.push(LabelerAddon)   // オン
 
 | アドオン名 | リポジトリ | 状態 | 概要 |
 |---|---|---|---|
-| AIラベル付与 | generative-ai-addon-labeler | 🚧 開発中 | CSVデータをマスタ定義に基づきAIが自動ラベル付与（S3 Vectors + Bedrock） |
+| AIラベル付与 | generative-ai-addon-labeler | ✅ 完了 | CSVデータをマスタ定義に基づきAIが自動ラベル付与（S3 Vectors + Bedrock） |
 
 > アドオンが追加されたらここに追記する
 
@@ -123,26 +187,25 @@ generative-ai-base/
 git checkout custom/self
 git checkout -b addon-dev/labeler
 
-# 2. コードを書く
-# packages/web/src/addons/labeler/  ← Reactコンポーネント
-# packages/cdk/lib/labeler/         ← CDK構成
-# packages/lambda/labeler/          ← Lambda処理
+# 2. コードを書く（アドオンリポジトリ側）
+# generative-ai-addon-labeler/packages/web/    ← Reactコンポーネント
+# generative-ai-addon-labeler/packages/cdk/    ← CDK構成
+# generative-ai-addon-labeler/packages/lambda/ ← Lambda処理
 
 # 3. AWSで動作確認したいとき
 git checkout custom/self
-git merge addon-dev/batch
-cdk deploy
+git merge addon-dev/labeler
+npx cdk deploy --profile sandbox
 
 # 4. 確認後、開発ブランチに戻る
-git checkout addon-dev/batch
+git checkout addon-dev/labeler
 
-# 5. 完成後、addon リポジトリへ切り出し
-#    → custom/self は revert してクリーンに戻す
-git checkout custom/self
-git revert <addon-dev コミット群>
+# 5. 完成後、addonリポジトリにコミット・プッシュ
+cd generative-ai-addon-labeler
+git push origin main
 ```
 
-### addon リポジトリへの切り出しタイミング
+### addonリポジトリへの切り出しタイミング
 焦って切り出す必要はない。以下のいずれかになったタイミングで切り出す。
 
 - 2社目のクライアントに適用したくなった　← **これが現実的なトリガー**
@@ -178,12 +241,51 @@ git push -u origin custom/clientA
 ```
 
 ### アドオンの追加（クライアントリポジトリ内）
-```bash
-# アドオンリポジトリをsubmoduleまたはnpm installで追加
-# ※方式は規模に応じて決定（現時点ではファイルコピーでも可）
 
-# packages/web/src/addons/index.ts を作成してアドオンをオンにする
-# packages/cdk/bin/app.ts にアドオンスタックを追加する
+#### 1. package.json のworkspacesにアドオンを追加
+```json
+{
+  "workspaces": [
+    "packages/*",
+    "../generative-ai-addon-labeler/packages/cdk",
+    "../generative-ai-addon-labeler/packages/lambda"
+  ]
+}
+```
+
+#### 2. Webパッケージの依存に追加
+```json
+// packages/web/package.json
+{
+  "dependencies": {
+    "@birdworks/genu-addon-labeler-web": "file:../../../generative-ai-addon-labeler/packages/web"
+  }
+}
+```
+
+#### 3. アドオンを登録
+```typescript
+// packages/web/src/addons/index.ts
+import { addonRegistry } from './registry'
+import { LabelerAddon } from '@birdworks/genu-addon-labeler-web'
+addonRegistry.push(LabelerAddon)
+```
+
+#### 4. CDKスタックに追加
+```typescript
+// packages/cdk/lib/create-stacks.ts
+import { LabelerStack } from '../../../../generative-ai-addon-labeler/packages/cdk/lib';
+
+new LabelerStack(app, `LabelerStack${updatedParams.env}`, {
+  restApi: generativeAiUseCasesStack.backendApi.api,
+  authorizer: generativeAiUseCasesStack.backendApi.authorizer,
+  bedrockRegion: updatedParams.modelRegion,
+});
+```
+
+#### 5. npm install
+```bash
+npm install
 ```
 
 ---
@@ -220,8 +322,7 @@ git tag v1.x.x && git push origin v1.x.x
 
 # 各クライアントでアドオン更新 → デプロイ
 cd generative-ai-clientA
-# （参照方式に応じて npm update または submodule update）
-cdk deploy
+npx cdk deploy --profile sandbox
 ```
 
 ---
@@ -231,7 +332,7 @@ cdk deploy
 | クライアント | リポジトリ | ブランチ | 有効アドオン |
 |---|---|---|---|
 | デモ環境 | generative-ai-base | custom/demo | - |
-| 自社環境 | generative-ai-base | custom/self | - |
+| 自社環境 | generative-ai-base | custom/self | AIラベル付与 |
 | A社 | generative-ai-clientA | custom/clientA | - |
 | B社 | generative-ai-clientB | custom/clientB | - |
 
@@ -241,7 +342,7 @@ cdk deploy
 
 ## 未決定事項（規模が見えたら判断する）
 
-- [ ] アドオンの参照方式：git submodule / npm package / ファイルコピー
-- [ ] npm private registry の要否（GitHub Packages等）
+- [x] アドオンの参照方式：`file:` 参照（npm workspaces）で運用中
+- [ ] npm private registry の要否（GitHub Packages等）：2社目以降で検討
 - [ ] CI/CDによる全クライアント一括デプロイの自動化
 - [ ] アドオンが増えた場合のモノレポ統合（`generative-ai-addons/`）の要否
