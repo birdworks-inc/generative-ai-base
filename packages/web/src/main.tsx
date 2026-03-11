@@ -49,6 +49,8 @@ import GenerateDiagramPage from './pages/GenerateDiagramPage.tsx';
 import WriterPage from './pages/WriterPage.tsx';
 import useUseCases from './hooks/useUseCases';
 import { Toaster } from 'sonner';
+import { addonRegistry } from './addons/registry';
+import './addons/index';
 
 const ragEnabled: boolean = import.meta.env.VITE_APP_RAG_ENABLED === 'true';
 const ragKnowledgeBaseEnabled: boolean =
@@ -283,6 +285,10 @@ const useCaseBuilderRoutes: RouteObject[] = [
     path: `/use-case-builder/setting`,
     element: <Setting />,
   },
+  ...addonRegistry.map((addon) => ({
+    path: addon.to,
+    element: <addon.component />,
+  })),
   {
     path: '*',
     element: <NotFound />,
