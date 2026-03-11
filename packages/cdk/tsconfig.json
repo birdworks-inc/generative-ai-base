@@ -32,7 +32,13 @@
 
     // Type definition file settings
     "typeRoots": ["../../node_modules/@types"],
-    "types": ["jest", "node"]
+    "types": ["jest", "node"],
+    "baseUrl": ".",
+    "paths": {
+      "aws-cdk-lib": ["../../node_modules/aws-cdk-lib"],
+      "aws-cdk-lib/*": ["../../node_modules/aws-cdk-lib/*"],
+      "constructs": ["../../node_modules/constructs"]
+    }
   },
   // Exclude files and directories
   "exclude": ["node_modules", "cdk.out", "custom-resources/**", "dist"]

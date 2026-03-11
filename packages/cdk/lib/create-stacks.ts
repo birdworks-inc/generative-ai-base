@@ -14,6 +14,7 @@ import { ApplicationInferenceProfileStack } from './application-inference-profil
 import { ClosedNetworkStack } from './closed-network-stack';
 import { RemoteOutputs } from 'cdk-remote-stack';
 import { REMOTE_OUTPUT_KEYS } from './remote-output-keys';
+import { LabelerStack } from '../../../../generative-ai-addon-labeler/packages/cdk/lib';
 
 class DeletionPolicySetter implements cdk.IAspect {
   constructor(private readonly policy: cdk.RemovalPolicy) {}
@@ -304,6 +305,17 @@ export const createStacks = (app: cdk.App, params: ProcessedStackInput) => {
   cdk.Aspects.of(generativeAiUseCasesStack).add(
     new DeletionPolicySetter(cdk.RemovalPolicy.DESTROY)
   );
+
+  // AIラベル付与アドオン
+  new LabelerStack(app, `LabelerStack${updatedParams.env}`, {
+    env: {
+      account: updatedParams.account,
+      region: updatedParams.region,
+    },
+    restApi: generativeAiUseCasesStack.backendApi.api,
+    authorizer: generativeAiUseCasesStack.backendApi.authorizer,
+    bedrockRegion: updatedParams.modelRegion,
+  });
 
   const dashboardStack = updatedParams.dashboard
     ? new DashboardStack(

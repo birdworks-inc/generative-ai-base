@@ -68,6 +68,7 @@ export interface GenerativeAiUseCasesStackProps extends StackProps {
 export class GenerativeAiUseCasesStack extends Stack {
   public readonly userPool: cognito.UserPool;
   public readonly userPoolClient: cognito.UserPoolClient;
+  public readonly backendApi: Api;
 
   constructor(
     scope: Construct,
@@ -199,6 +200,7 @@ export class GenerativeAiUseCasesStack extends Stack {
       securityGroups,
       apiGatewayVpcEndpoint: props.apiGatewayVpcEndpoint,
     });
+    this.backendApi = api;
 
     // WAF
     if (
