@@ -254,6 +254,10 @@ const routes: RouteObject[] = [
         element: <AgentBuilderChatPage />,
       }
     : null,
+  ...addonRegistry.map((addon) => ({
+    path: `${addon.to}/*`,
+    element: <addon.component />,
+  })),
   {
     path: '*',
     element: <NotFound />,
@@ -285,10 +289,6 @@ const useCaseBuilderRoutes: RouteObject[] = [
     path: `/use-case-builder/setting`,
     element: <Setting />,
   },
-  ...addonRegistry.map((addon) => ({
-    path: addon.to,
-    element: <addon.component />,
-  })),
   {
     path: '*',
     element: <NotFound />,
