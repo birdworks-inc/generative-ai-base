@@ -162,6 +162,7 @@ new LabelerStack(app, 'LabelerStack', {
 | アドオン名 | リポジトリ | 状態 | 概要 |
 |---|---|---|---|
 | AIラベル付与 | generative-ai-addon-labeler | ✅ 完了 | CSVデータをマスタ定義に基づきAIが自動ラベル付与・選定理由を出力（S3 Vectors + Bedrock Knowledge Bases） |
+| ユーザー管理 | generative-ai-addon-usermgmt | 🚧 開発中 | CognitoユーザーのGUI管理・プロフィール管理（Cognito + DynamoDB） |
 
 > アドオンが追加されたらここに追記する
 
@@ -345,4 +346,7 @@ npx cdk deploy --profile sandbox
 - [x] アドオンの参照方式：`file:` 参照（npm workspaces）で運用中
 - [ ] npm private registry の要否（GitHub Packages等）：2社目以降で検討
 - [ ] CI/CDによる全クライアント一括デプロイの自動化
-- [ ] アドオンが増えた場合のモノレポ統合（`generative-ai-addons/`）の要否
+- [ ] アドオンリポジトリの統合方針：現状は個別リポジトリで運用。以下の条件が揃った場合に `generative-ai-addons/` へのモノレポ統合を検討する
+  - アドオンが3つ以上になった
+  - 共通UIコンポーネント・APIクライアント等の重複が目立ち始めた
+  - 複数アドオンを同時にデプロイする機会が増えた
