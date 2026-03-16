@@ -54,6 +54,7 @@
   },
   "dependencies": {
     "@aws-sdk/client-s3vectors": "^3.0.0",
+    "@birdworks-inc/genu-addon-labeler-web": "^0.1.12",
     "rehype-katex": "^7.0.1",
     "remark-math": "^6.0.0"
   }
