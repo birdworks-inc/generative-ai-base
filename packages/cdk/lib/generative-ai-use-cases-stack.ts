@@ -202,6 +202,15 @@ export class GenerativeAiUseCasesStack extends Stack {
     });
     this.backendApi = api;
 
+    new CfnOutput(this, 'RestApiId', {
+      value: api.api.restApiId,
+      exportName: `${this.stackName}-RestApiId`,
+    });
+    new CfnOutput(this, 'RestApiRootResourceId', {
+      value: api.api.restApiRootResourceId,
+      exportName: `${this.stackName}-RestApiRootResourceId`,
+    });
+
     // WAF
     if (
       params.allowedIpV4AddressRanges ||
@@ -474,7 +483,10 @@ export class GenerativeAiUseCasesStack extends Stack {
       value: api.fileBucket.bucketName,
     });
 
-    new CfnOutput(this, 'UserPoolId', { value: auth.userPool.userPoolId });
+    new CfnOutput(this, 'UserPoolId', {
+      value: auth.userPool.userPoolId,
+      exportName: `${this.stackName}-UserPoolId`,
+    });
 
     new CfnOutput(this, 'UserPoolClientId', {
       value: auth.client.userPoolClientId,

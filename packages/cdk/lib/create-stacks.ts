@@ -14,8 +14,7 @@ import { ApplicationInferenceProfileStack } from './application-inference-profil
 import { ClosedNetworkStack } from './closed-network-stack';
 import { RemoteOutputs } from 'cdk-remote-stack';
 import { REMOTE_OUTPUT_KEYS } from './remote-output-keys';
-import { LabelerStack } from '../../../../generative-ai-addon-labeler/packages/cdk/lib';
-import { UsermgmtStack } from '../../../../generative-ai-addon-usermgmt/packages/cdk/lib';
+import { AddonStack } from './addon-stack';
 
 class DeletionPolicySetter implements cdk.IAspect {
   constructor(private readonly policy: cdk.RemovalPolicy) {}
@@ -307,26 +306,16 @@ export const createStacks = (app: cdk.App, params: ProcessedStackInput) => {
     new DeletionPolicySetter(cdk.RemovalPolicy.DESTROY)
   );
 
-  // AIラベル付与アドオン
-  new LabelerStack(app, `LabelerStack${updatedParams.env}`, {
+  // Addon integration stack
+  new AddonStack(app, `AddonStack${updatedParams.env}`, {
     env: {
       account: updatedParams.account,
       region: updatedParams.region,
     },
-    restApi: generativeAiUseCasesStack.backendApi.api,
-    authorizer: generativeAiUseCasesStack.backendApi.authorizer,
     bedrockRegion: updatedParams.modelRegion,
-  });
-
-  // User management addon
-  new UsermgmtStack(app, `UsermgmtStack${updatedParams.env}`, {
-    env: {
-      account: updatedParams.account,
-      region: updatedParams.region,
-    },
-    restApi: generativeAiUseCasesStack.backendApi.api,
-    authorizer: generativeAiUseCasesStack.backendApi.authorizer,
-    userPoolId: generativeAiUseCasesStack.userPool.userPoolId,
+    userPoolId: cdk.Fn.importValue(
+      `GenerativeAiUseCasesStack${updatedParams.env}-UserPoolId`
+    ),
   });
 
   const dashboardStack = updatedParams.dashboard
