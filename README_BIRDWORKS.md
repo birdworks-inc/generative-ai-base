@@ -1,5 +1,7 @@
 # GenU 環境
+
 ## 販促関連
+
 [GenUセールス](https://github.com/birdworks-inc/genu-sales)
 
 ---
@@ -31,23 +33,26 @@ generative-ai-clientC/
 ## 設計原則
 
 ### 1. GenU本体に手を入れない
+
 本家更新への随時追従を維持するため、`generative-ai-base` 内の既存ファイル変更を最小限に抑える。
 
 - **NG**: GenUの既存ファイル（`App.tsx`等）を直接編集してアドオン機能を追加する
 - **OK**: 新規ファイルの追加、および拡張ポイント（後述）への最小限の追記
 
 ### 2. アドオンは別リポジトリで分離
+
 - アドオンのコードは `generative-ai-addon-{name}/` として独立管理
 - 各クライアントはアドオンの「オン・オフ」のみ設定する（コードカスタマイズなし）
 - アドオンの更新がGenU本体・他クライアントに波及しない
 
 ### 3. クライアントリポジトリの変更頻度を最小化
-| リポジトリ | 変更頻度 | 変更理由 |
-|---|---|---|
-| upstream/main | 高（本家依存） | 参照のみ |
-| generative-ai-base | 中 | upstream merge + 拡張ポイント整備 |
-| generative-ai-addon-{name} | 中 | 機能追加・改善 |
-| generative-ai-clientX | **低** | アドオンのオン・オフ、設定値のみ |
+
+| リポジトリ                 | 変更頻度       | 変更理由                          |
+| -------------------------- | -------------- | --------------------------------- |
+| upstream/main              | 高（本家依存） | 参照のみ                          |
+| generative-ai-base         | 中             | upstream merge + 拡張ポイント整備 |
+| generative-ai-addon-{name} | 中             | 機能追加・改善                    |
+| generative-ai-clientX      | **低**         | アドオンのオン・オフ、設定値のみ  |
 
 ---
 
@@ -65,13 +70,13 @@ packages/web/src/addons/
 ```typescript
 // packages/web/src/addons/registry.ts
 export interface AddonDefinition {
-  id: string
-  label: string                              // サイドバーのメニュー名
-  icon: JSX.Element | null                   // nullの場合はデフォルトアイコンにフォールバック
-  path: string                               // /addons/{name}
-  component: React.LazyExoticComponent<any>
+  id: string;
+  label: string; // サイドバーのメニュー名
+  icon: JSX.Element | null; // nullの場合はデフォルトアイコンにフォールバック
+  path: string; // /addons/{name}
+  component: React.LazyExoticComponent<any>;
 }
-export const addonRegistry: AddonDefinition[] = []
+export const addonRegistry: AddonDefinition[] = [];
 ```
 
 ```typescript
@@ -84,10 +89,10 @@ export const addonRegistry: AddonDefinition[] = []
 
 ```typescript
 // packages/web/src/addons/index.ts（クライアントリポジトリ側）
-import { addonRegistry } from './registry'
-import { LabelerAddon } from '@birdworks/genu-addon-labeler-web'
+import { addonRegistry } from './registry';
+import { LabelerAddon } from '@birdworks/genu-addon-labeler-web';
 
-addonRegistry.push(LabelerAddon)   // オン
+addonRegistry.push(LabelerAddon); // オン
 // addonRegistry.push(XxxAddon)    // オフ（コメントアウト）
 ```
 
@@ -96,6 +101,7 @@ addonRegistry.push(LabelerAddon)   // オン
 ## アドオンのCDK統合（Authorizer共有設計）
 
 ### 背景
+
 アドオンのAPIエンドポイントをGenU既存のAPI Gatewayに追加する際、認証（Authorizer）をどう扱うかを検討した。
 
 **採用した方針：GenU側のAuthorizerを共有する**
@@ -123,14 +129,16 @@ new LabelerStack(app, 'LabelerStack', {
 ```
 
 ### なぜ共有するのか
+
 アドオンが独自にAuthorizerを作成する方法（`userPool`を受け取って自前で作る）も可能だが、アドオンが増えるたびにAuthorizerが増えていく。同じUserPoolを参照する冗長なリソースが累積するため、GenU側のAuthorizerを共有する設計を採用した。
 
-| 方式 | GenU本体への変更 | アドオン増加時 |
-|---|---|---|
-| 独自Authorizer作成 | なし | アドオン数分だけ増加 |
-| **GenU側を共有（採用）** | `api.ts` に1行追加 | 常に1つ |
+| 方式                     | GenU本体への変更   | アドオン増加時       |
+| ------------------------ | ------------------ | -------------------- |
+| 独自Authorizer作成       | なし               | アドオン数分だけ増加 |
+| **GenU側を共有（採用）** | `api.ts` に1行追加 | 常に1つ              |
 
 ### GenU本体への変更箇所（2ファイル・最小限）
+
 - `packages/cdk/lib/construct/api.ts`：`readonly authorizer` をエクスポート・`this.authorizer = authorizer` を追加
 - `packages/cdk/lib/generative-ai-use-cases-stack.ts`：`public readonly backendApi: Api` をエクスポート・`this.backendApi = api` を追加
 
@@ -159,10 +167,10 @@ new LabelerStack(app, 'LabelerStack', {
 
 ## アドオン一覧
 
-| アドオン名 | リポジトリ | 状態 | 概要 |
-|---|---|---|---|
-| AIラベル付与 | generative-ai-addon-labeler | ✅ 完了 | CSVデータをマスタ定義に基づきAIが自動ラベル付与・選定理由を出力（S3 Vectors + Bedrock Knowledge Bases） |
-| ユーザー管理 | generative-ai-addon-usermgmt | 🚧 開発中 | CognitoユーザーのGUI管理・プロフィール管理（Cognito + DynamoDB） |
+| アドオン名   | リポジトリ                   | 状態      | 概要                                                                                                    |
+| ------------ | ---------------------------- | --------- | ------------------------------------------------------------------------------------------------------- |
+| AIラベル付与 | generative-ai-addon-labeler  | ✅ 完了   | CSVデータをマスタ定義に基づきAIが自動ラベル付与・選定理由を出力（S3 Vectors + Bedrock Knowledge Bases） |
+| ユーザー管理 | generative-ai-addon-usermgmt | 🚧 開発中 | CognitoユーザーのGUI管理・プロフィール管理（Cognito + DynamoDB）                                        |
 
 > アドオンが追加されたらここに追記する
 
@@ -171,6 +179,7 @@ new LabelerStack(app, 'LabelerStack', {
 ## アドオン開発環境
 
 ### 基本方針
+
 一人開発・AWS環境は custom/self を流用する前提のため、複雑な仕組みは不要。  
 **addon-dev/{name} ブランチで開発し、動作確認時だけ custom/self にマージする。**
 
@@ -183,6 +192,7 @@ generative-ai-base/
 ```
 
 ### 開発サイクル
+
 ```bash
 # 1. 開発開始
 git checkout custom/self
@@ -207,6 +217,7 @@ git push origin main
 ```
 
 ### addonリポジトリへの切り出しタイミング
+
 焦って切り出す必要はない。以下のいずれかになったタイミングで切り出す。
 
 - 2社目のクライアントに適用したくなった　← **これが現実的なトリガー**
@@ -220,6 +231,7 @@ git push origin main
 ## セットアップ手順
 
 ### baseリポジトリの準備
+
 ```bash
 git checkout main
 git checkout -b custom/demo   # デモ用ブランチ
@@ -227,6 +239,7 @@ git checkout -b custom/self   # 自社用ブランチ
 ```
 
 ### クライアントリポジトリの作成
+
 ```bash
 # baseをテンプレートとしてA社リポジトリを作成
 git clone generative-ai-base generative-ai-clientA
@@ -244,6 +257,7 @@ git push -u origin custom/clientA
 ### アドオンの追加（クライアントリポジトリ内）
 
 #### 1. package.json のworkspacesにアドオンを追加
+
 ```json
 {
   "workspaces": [
@@ -255,6 +269,7 @@ git push -u origin custom/clientA
 ```
 
 #### 2. Webパッケージの依存に追加
+
 ```json
 // packages/web/package.json
 {
@@ -265,14 +280,16 @@ git push -u origin custom/clientA
 ```
 
 #### 3. アドオンを登録
+
 ```typescript
 // packages/web/src/addons/index.ts
-import { addonRegistry } from './registry'
-import { LabelerAddon } from '@birdworks/genu-addon-labeler-web'
-addonRegistry.push(LabelerAddon)
+import { addonRegistry } from './registry';
+import { LabelerAddon } from '@birdworks/genu-addon-labeler-web';
+addonRegistry.push(LabelerAddon);
 ```
 
 #### 4. CDKスタックに追加
+
 ```typescript
 // packages/cdk/lib/create-stacks.ts
 import { LabelerStack } from '../../../../generative-ai-addon-labeler/packages/cdk/lib';
@@ -285,6 +302,7 @@ new LabelerStack(app, `LabelerStack${updatedParams.env}`, {
 ```
 
 #### 5. npm install
+
 ```bash
 npm install
 ```
@@ -294,6 +312,7 @@ npm install
 ## 日常運用フロー
 
 ### ① 本家の更新をbaseに取り込む
+
 ```bash
 cd generative-ai-base
 git fetch upstream
@@ -308,6 +327,7 @@ git rebase main
 ```
 
 ### ② baseの更新を各クライアントに反映
+
 ```bash
 cd generative-ai-clientA
 git fetch base
@@ -316,6 +336,7 @@ git rebase base/main  # 必要な共通改善だけ取り込む
 ```
 
 ### ③ アドオンの更新を各クライアントに反映
+
 ```bash
 # アドオンリポジトリで更新・バージョンタグ付け
 cd generative-ai-addon-labeler
@@ -330,12 +351,12 @@ npx cdk deploy --profile sandbox
 
 ## クライアント一覧
 
-| クライアント | リポジトリ | ブランチ | 有効アドオン |
-|---|---|---|---|
-| デモ環境 | generative-ai-base | custom/demo | - |
-| 自社環境 | generative-ai-base | custom/self | AIラベル付与 |
-| A社 | generative-ai-clientA | custom/clientA | - |
-| B社 | generative-ai-clientB | custom/clientB | - |
+| クライアント | リポジトリ            | ブランチ       | 有効アドオン |
+| ------------ | --------------------- | -------------- | ------------ |
+| デモ環境     | generative-ai-base    | custom/demo    | -            |
+| 自社環境     | generative-ai-base    | custom/self    | AIラベル付与 |
+| A社          | generative-ai-clientA | custom/clientA | -            |
+| B社          | generative-ai-clientB | custom/clientB | -            |
 
 > クライアントが追加されたらここに追記する
 
