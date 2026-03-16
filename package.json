@@ -45,7 +45,8 @@
   },
   "workspaces": [
     "packages/*",
-    "../generative-ai-addon-labeler/packages/cdk"
+    "../generative-ai-addon-labeler/packages/cdk",
+    "../generative-ai-addon-usermgmt/packages/cdk"
   ],
   "lint-staged": {
     "**/*": [
@@ -55,6 +56,7 @@
   "dependencies": {
     "@aws-sdk/client-s3vectors": "^3.0.0",
     "@birdworks-inc/genu-addon-labeler-web": "^0.1.12",
+    "@birdworks-inc/genu-addon-usermgmt-web": "file:../generative-ai-addon-usermgmt/packages/web",
     "rehype-katex": "^7.0.1",
     "remark-math": "^6.0.0"
   }
