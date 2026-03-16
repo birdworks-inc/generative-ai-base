@@ -161,7 +161,7 @@ new LabelerStack(app, 'LabelerStack', {
 
 | アドオン名 | リポジトリ | 状態 | 概要 |
 |---|---|---|---|
-| AIラベル付与 | generative-ai-addon-labeler | ✅ 完了 | CSVデータをマスタ定義に基づきAIが自動ラベル付与（S3 Vectors + Bedrock） |
+| AIラベル付与 | generative-ai-addon-labeler | ✅ 完了 | CSVデータをマスタ定義に基づきAIが自動ラベル付与・選定理由を出力（S3 Vectors + Bedrock Knowledge Bases） |
 
 > アドオンが追加されたらここに追記する
 
