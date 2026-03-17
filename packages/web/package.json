@@ -24,7 +24,7 @@
     "@aws-sdk/protocol-http": "^3.370.0",
     "@aws-sdk/signature-v4": "^3.370.0",
     "@birdworks-inc/genu-addon-labeler-web": "^0.1.9",
-    "@birdworks-inc/genu-addon-usermgmt-web": "^0.1.0",
+    "@birdworks-inc/genu-addon-usermgmt-web": "^0.1.2",
     "@headlessui/react": "^1.7.18",
     "@radix-ui/react-dialog": "^1.0.5",
     "@radix-ui/react-popover": "^1.0.7",
