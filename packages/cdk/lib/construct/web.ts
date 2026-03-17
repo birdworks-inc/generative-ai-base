@@ -75,6 +75,7 @@ export interface WebProps {
     logoPath?: string;
     title?: string;
   };
+  readonly addonApiEndpointUrl?: string;
 }
 
 export class Web extends Construct {
@@ -320,6 +321,7 @@ export class Web extends Construct {
         ),
         VITE_APP_BRANDING_LOGO_PATH: props.brandingConfig?.logoPath ?? '',
         VITE_APP_BRANDING_TITLE: props.brandingConfig?.title ?? '',
+        VITE_APP_ADDON_API_ENDPOINT: props.addonApiEndpointUrl ?? '',
         NODE_AUTH_TOKEN: ssm.StringParameter.valueForStringParameter(
           this,
           '/genu/github-packages-token'

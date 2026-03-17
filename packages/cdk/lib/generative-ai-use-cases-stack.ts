@@ -1,4 +1,4 @@
-import { Stack, StackProps, CfnOutput, Duration } from 'aws-cdk-lib';
+import { Stack, StackProps, CfnOutput, Duration, Fn } from 'aws-cdk-lib';
 import { Construct } from 'constructs';
 import {
   Auth,
@@ -295,6 +295,9 @@ export class GenerativeAiUseCasesStack extends Stack {
         params.samlCognitoFederatedIdentityProviderName,
       // Backend
       apiEndpointUrl: api.api.url,
+      addonApiEndpointUrl: Fn.importValue(
+        `AddonStack${params.env}-ApiEndpoint`
+      ),
       predictStreamFunctionArn: api.predictStreamFunction.functionArn,
       ragEnabled: params.ragEnabled,
       ragKnowledgeBaseEnabled: params.ragKnowledgeBaseEnabled,
