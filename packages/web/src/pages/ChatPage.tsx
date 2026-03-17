@@ -241,10 +241,13 @@ const ChatPage: React.FC = () => {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [search, setContent, availableModels, pathname]);
 
-  const onSend = useCallback(() => {
+  const onSend = useCallback(async () => {
     setFollowing(true);
-    postChat(
-      prompter.chatPrompt({ content }),
+    const savedContent = content;
+    setContent('');
+    clearFiles();
+    const success = await postChat(
+      prompter.chatPrompt({ content: savedContent }),
       false,
       undefined,
       undefined,
@@ -256,8 +259,9 @@ const ChatPage: React.FC = () => {
       base64Cache,
       overrideModelParameters
     );
-    setContent('');
-    clearFiles();
+    if (!success) {
+      setContent(savedContent);
+    }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [
     content,
