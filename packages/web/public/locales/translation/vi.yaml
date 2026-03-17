@@ -316,6 +316,12 @@ drawer:
   generative_ai: (Generative AI)
   tools: Công cụ
   use_cases: Use case
+error:
+  streamingError:
+    ACCESS_DENIED: Mô hình được chọn chưa được kích hoạt. Vui lòng kích hoạt mô hình trong bảng điều khiển Amazon Bedrock.
+    PAYLOAD_TOO_LARGE: Tệp đính kèm quá lớn. Vui lòng giảm kích thước tệp hoặc số lượng tệp đính kèm và thử lại.
+    THROTTLING: Máy chủ hiện đang có lưu lượng truy cập cao. Vui lòng thử lại sau.
+    UNKNOWN_ERROR: Đã xảy ra lỗi. Vui lòng thử lại hoặc liên hệ quản trị viên.
 feedback:
   additional_feedback: Nếu bạn có phản hồi khác, vui lòng nhập. (tùy chọn)
   reason_error: Vui lòng chọn lý do.
