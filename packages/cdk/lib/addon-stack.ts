@@ -2,8 +2,8 @@ import * as cdk from 'aws-cdk-lib';
 import * as apigateway from 'aws-cdk-lib/aws-apigateway';
 import * as cognito from 'aws-cdk-lib/aws-cognito';
 import { Construct } from 'constructs';
-import { LabelerConstruct } from '../../../../generative-ai-addon-labeler/packages/cdk/lib';
-import { UsermgmtConstruct } from '../../../../generative-ai-addon-usermgmt/packages/cdk/lib';
+import { LabelerConstruct } from '../../../../generative-ai-addons/packages/labeler/cdk/lib';
+import { UsermgmtConstruct } from '../../../../generative-ai-addons/packages/usermgmt/cdk/lib';
 
 export interface AddonStackProps extends cdk.StackProps {
   userPoolId: string;
