@@ -369,6 +369,6 @@ npx cdk deploy --profile sandbox
 ## 未決定事項（規模が見えたら判断する）
 
 - [x] アドオンの参照方式：`file:` 参照（npm workspaces）で運用中
-- [ ] npm private registry の要否（GitHub Packages等）：2社目以降で検討
+- [x] npm private registry の要否（GitHub Packages等）：GitHub Packages を採用済み（`@birdworks-inc/` スコープで公開）
 - [ ] CI/CDによる全クライアント一括デプロイの自動化
 - [x] アドオンリポジトリの統合方針：`generative-ai-addons/` モノレポに統合済み（labeler / usermgmt / chirp）
