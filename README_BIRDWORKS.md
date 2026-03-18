@@ -170,11 +170,11 @@ new LabelerStack(app, 'LabelerStack', {
 
 ## アドオン一覧
 
-| アドオン名      | リポジトリ                             | 状態      | 概要                                                                                                    |
-| --------------- | -------------------------------------- | --------- | ------------------------------------------------------------------------------------------------------- |
-| AIラベル付与    | generative-ai-addons/packages/labeler  | ✅ 完了   | CSVデータをマスタ定義に基づきAIが自動ラベル付与・選定理由を出力（S3 Vectors + Bedrock Knowledge Bases） |
-| ユーザー管理    | generative-ai-addons/packages/usermgmt | 🚧 開発中 | CognitoユーザーのGUI管理・プロフィール管理（Cognito + DynamoDB）                                        |
-| 社内ナレッジRAG | generative-ai-addons/packages/chirp    | 🚧 開発中 | S3 VectorsベースのRAGチャット（Chirp）                                                                  |
+| アドオン名      | リポジトリ                             | 状態      | バージョン | 概要                                                                                                    |
+| --------------- | -------------------------------------- | --------- | ---------- | ------------------------------------------------------------------------------------------------------- |
+| AIラベル付与    | generative-ai-addons/packages/labeler  | ✅ 完了   | 0.1.13     | CSVデータをマスタ定義に基づきAIが自動ラベル付与・選定理由を出力（S3 Vectors + Bedrock Knowledge Bases） |
+| ユーザー管理    | generative-ai-addons/packages/usermgmt | 🚧 開発中 | 0.1.5      | CognitoユーザーのGUI管理・プロフィール管理（Cognito + DynamoDB）                                        |
+| 社内ナレッジRAG | generative-ai-addons/packages/chirp    | ✅ 完了   | 0.1.0      | S3 VectorsベースのRAGチャット。文書管理・分析・アクセス制御（Cognito chirp-\*グループ）対応（Chirp）    |
 
 > アドオンが追加されたらここに追記する
 
@@ -355,12 +355,12 @@ npx cdk deploy --profile sandbox
 
 ## クライアント一覧
 
-| クライアント | リポジトリ            | ブランチ       | 有効アドオン |
-| ------------ | --------------------- | -------------- | ------------ |
-| デモ環境     | generative-ai-base    | custom/demo    | -            |
-| 自社環境     | generative-ai-base    | custom/self    | AIラベル付与 |
-| A社          | generative-ai-clientA | custom/clientA | -            |
-| B社          | generative-ai-clientB | custom/clientB | -            |
+| クライアント | リポジトリ            | ブランチ       | 有効アドオン                         |
+| ------------ | --------------------- | -------------- | ------------------------------------ |
+| デモ環境     | generative-ai-base    | custom/demo    | -                                    |
+| 自社環境     | generative-ai-base    | custom/self    | AIラベル付与・社内ナレッジRAG(Chirp) |
+| A社          | generative-ai-clientA | custom/clientA | -                                    |
+| B社          | generative-ai-clientB | custom/clientB | -                                    |
 
 > クライアントが追加されたらここに追記する
 
