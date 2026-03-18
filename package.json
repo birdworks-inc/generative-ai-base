@@ -45,8 +45,9 @@
   },
   "workspaces": [
     "packages/*",
-    "../generative-ai-addon-labeler/packages/cdk",
-    "../generative-ai-addon-usermgmt/packages/cdk"
+    "../generative-ai-addons/packages/labeler/cdk",
+    "../generative-ai-addons/packages/usermgmt/cdk",
+    "../generative-ai-addons/packages/chirp/cdk"
   ],
   "lint-staged": {
     "**/*": [
