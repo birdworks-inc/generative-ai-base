@@ -16,12 +16,11 @@ generative-ai-base/
     ├── custom/demo   ← デモ環境
     └── custom/self   ← 自社環境
 
-generative-ai-addon-{name}/        ← アドオンごとに独立リポジトリ（main運用）
-    generative-ai-addon-labeler/   ← AIラベル付与アドオン
-        packages/
-            web/    ← Reactコンポーネント（@birdworks/genu-addon-labeler-web）
-            cdk/    ← CDK構成（@birdworks/genu-addon-labeler-cdk）
-            lambda/ ← Lambda処理（@birdworks/genu-addon-labeler-lambda）
+generative-ai-addons/          ← アドオンモノレポ
+    packages/
+        labeler/  (web, cdk, lambda)  ← AIラベル付与
+        usermgmt/ (web, cdk, lambda)  ← ユーザー管理
+        chirp/    (web, cdk, lambda)  ← 社内ナレッジRAG
 
 generative-ai-clientA/        ← テンプレートから作成
 generative-ai-clientB/
@@ -153,8 +152,12 @@ new LabelerStack(app, 'LabelerStack', {
 {
   "workspaces": [
     "packages/*",
-    "../generative-ai-addon-labeler/packages/cdk",
-    "../generative-ai-addon-labeler/packages/lambda"
+    "../generative-ai-addons/packages/labeler/cdk",
+    "../generative-ai-addons/packages/labeler/lambda",
+    "../generative-ai-addons/packages/usermgmt/cdk",
+    "../generative-ai-addons/packages/usermgmt/lambda",
+    "../generative-ai-addons/packages/chirp/cdk",
+    "../generative-ai-addons/packages/chirp/lambda"
   ]
 }
 ```
@@ -167,10 +170,11 @@ new LabelerStack(app, 'LabelerStack', {
 
 ## アドオン一覧
 
-| アドオン名   | リポジトリ                   | 状態      | 概要                                                                                                    |
-| ------------ | ---------------------------- | --------- | ------------------------------------------------------------------------------------------------------- |
-| AIラベル付与 | generative-ai-addon-labeler  | ✅ 完了   | CSVデータをマスタ定義に基づきAIが自動ラベル付与・選定理由を出力（S3 Vectors + Bedrock Knowledge Bases） |
-| ユーザー管理 | generative-ai-addon-usermgmt | 🚧 開発中 | CognitoユーザーのGUI管理・プロフィール管理（Cognito + DynamoDB）                                        |
+| アドオン名      | リポジトリ                             | 状態      | 概要                                                                                                    |
+| --------------- | -------------------------------------- | --------- | ------------------------------------------------------------------------------------------------------- |
+| AIラベル付与    | generative-ai-addons/packages/labeler  | ✅ 完了   | CSVデータをマスタ定義に基づきAIが自動ラベル付与・選定理由を出力（S3 Vectors + Bedrock Knowledge Bases） |
+| ユーザー管理    | generative-ai-addons/packages/usermgmt | 🚧 開発中 | CognitoユーザーのGUI管理・プロフィール管理（Cognito + DynamoDB）                                        |
+| 社内ナレッジRAG | generative-ai-addons/packages/chirp    | 🚧 開発中 | S3 VectorsベースのRAGチャット（Chirp）                                                                  |
 
 > アドオンが追加されたらここに追記する
 
@@ -198,10 +202,10 @@ generative-ai-base/
 git checkout custom/self
 git checkout -b addon-dev/labeler
 
-# 2. コードを書く（アドオンリポジトリ側）
-# generative-ai-addon-labeler/packages/web/    ← Reactコンポーネント
-# generative-ai-addon-labeler/packages/cdk/    ← CDK構成
-# generative-ai-addon-labeler/packages/lambda/ ← Lambda処理
+# 2. コードを書く（モノレポ側）
+# generative-ai-addons/packages/chirp/web/    ← Reactコンポーネント
+# generative-ai-addons/packages/chirp/cdk/    ← CDK構成
+# generative-ai-addons/packages/chirp/lambda/ ← Lambda処理
 
 # 3. AWSで動作確認したいとき
 git checkout custom/self
@@ -262,8 +266,8 @@ git push -u origin custom/clientA
 {
   "workspaces": [
     "packages/*",
-    "../generative-ai-addon-labeler/packages/cdk",
-    "../generative-ai-addon-labeler/packages/lambda"
+    "../generative-ai-addons/packages/labeler/cdk",
+    "../generative-ai-addons/packages/labeler/lambda"
   ]
 }
 ```
@@ -274,7 +278,7 @@ git push -u origin custom/clientA
 // packages/web/package.json
 {
   "dependencies": {
-    "@birdworks/genu-addon-labeler-web": "file:../../../generative-ai-addon-labeler/packages/web"
+    "@birdworks-inc/genu-addon-labeler-web": "^0.1.0"
   }
 }
 ```
@@ -284,7 +288,7 @@ git push -u origin custom/clientA
 ```typescript
 // packages/web/src/addons/index.ts
 import { addonRegistry } from './registry';
-import { LabelerAddon } from '@birdworks/genu-addon-labeler-web';
+import { LabelerAddon } from '@birdworks-inc/genu-addon-labeler-web';
 addonRegistry.push(LabelerAddon);
 ```
 
@@ -292,7 +296,7 @@ addonRegistry.push(LabelerAddon);
 
 ```typescript
 // packages/cdk/lib/create-stacks.ts
-import { LabelerStack } from '../../../../generative-ai-addon-labeler/packages/cdk/lib';
+import { LabelerStack } from '../../../../generative-ai-addons/packages/labeler/cdk/lib';
 
 new LabelerStack(app, `LabelerStack${updatedParams.env}`, {
   restApi: generativeAiUseCasesStack.backendApi.api,
@@ -367,7 +371,4 @@ npx cdk deploy --profile sandbox
 - [x] アドオンの参照方式：`file:` 参照（npm workspaces）で運用中
 - [ ] npm private registry の要否（GitHub Packages等）：2社目以降で検討
 - [ ] CI/CDによる全クライアント一括デプロイの自動化
-- [ ] アドオンリポジトリの統合方針：現状は個別リポジトリで運用。以下の条件が揃った場合に `generative-ai-addons/` へのモノレポ統合を検討する
-  - アドオンが3つ以上になった
-  - 共通UIコンポーネント・APIクライアント等の重複が目立ち始めた
-  - 複数アドオンを同時にデプロイする機会が増えた
+- [x] アドオンリポジトリの統合方針：`generative-ai-addons/` モノレポに統合済み（labeler / usermgmt / chirp）
