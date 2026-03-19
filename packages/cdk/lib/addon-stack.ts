@@ -44,7 +44,7 @@ export class AddonStack extends cdk.Stack {
       authorizer,
       bedrockRegion,
     });
-    new UsermgmtConstruct(this, 'Usermgmt', {
+    const usermgmt = new UsermgmtConstruct(this, 'Usermgmt', {
       restApi,
       authorizer,
       userPoolId,
@@ -53,6 +53,8 @@ export class AddonStack extends cdk.Stack {
       restApi,
       authorizer,
       bedrockRegion,
+      profileTableName: usermgmt.profileTableName,
+      profileTableArn: usermgmt.profileTableArn,
     });
 
     new cdk.CfnOutput(this, 'ApiEndpoint', {
