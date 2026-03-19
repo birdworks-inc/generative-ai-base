@@ -15,3 +15,5 @@ site*/
 .kiro/settings
 .kiro/specs
 deploy.log
+
+cdk.out/
