@@ -56,7 +56,7 @@
   },
   "dependencies": {
     "@aws-sdk/client-s3vectors": "^3.0.0",
-    "@birdworks-inc/genu-addon-chirp-web": "^0.1.14",
+    "@birdworks-inc/genu-addon-chirp-web": "^0.1.15",
     "@birdworks-inc/genu-addon-labeler-web": "^0.1.14",
     "@birdworks-inc/genu-addon-usermgmt-web": "^0.1.10",
     "rehype-katex": "^7.0.1",
