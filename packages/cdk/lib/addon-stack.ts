@@ -55,6 +55,7 @@ export class AddonStack extends cdk.Stack {
       bedrockRegion,
       profileTableName: usermgmt.profileTableName,
       profileTableArn: usermgmt.profileTableArn,
+      userPoolId,
     });
 
     new cdk.CfnOutput(this, 'ApiEndpoint', {
