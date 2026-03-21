@@ -23,7 +23,7 @@
     "@aws-sdk/credential-provider-cognito-identity": "^3.972.0",
     "@aws-sdk/protocol-http": "^3.370.0",
     "@aws-sdk/signature-v4": "^3.370.0",
-    "@birdworks-inc/genu-addon-chirp-web": "^0.1.20",
+    "@birdworks-inc/genu-addon-chirp-web": "^0.1.21",
     "@birdworks-inc/genu-addon-labeler-web": "^0.1.13",
     "@birdworks-inc/genu-addon-usermgmt-web": "^0.1.14",
     "@headlessui/react": "^1.7.18",
