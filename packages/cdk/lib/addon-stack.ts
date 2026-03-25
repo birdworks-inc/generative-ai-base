@@ -5,6 +5,7 @@ import { Construct } from 'constructs';
 import { LabelerConstruct } from '../../../../generative-ai-addons/packages/labeler/cdk/lib';
 import { UsermgmtConstruct } from '../../../../generative-ai-addons/packages/usermgmt/cdk/lib';
 import { ChirpConstruct } from '../../../../generative-ai-addons/packages/chirp/cdk/lib';
+import { DashboardConstruct } from '../../../../generative-ai-addons/packages/dashboard/cdk/lib';
 
 export interface AddonStackProps extends cdk.StackProps {
   userPoolId: string;
@@ -56,6 +57,10 @@ export class AddonStack extends cdk.Stack {
       profileTableName: usermgmt.profileTableName,
       profileTableArn: usermgmt.profileTableArn,
       userPoolId,
+    });
+    new DashboardConstruct(this, 'Dashboard', {
+      restApi,
+      authorizer,
     });
 
     new cdk.CfnOutput(this, 'ApiEndpoint', {
