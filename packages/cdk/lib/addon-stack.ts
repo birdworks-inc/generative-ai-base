@@ -71,6 +71,8 @@ export class AddonStack extends cdk.Stack {
       statsTableArn,
       profileTableName: usermgmt.profileTableName,
       profileTableArn: usermgmt.profileTableArn,
+      groupProfileTableName: usermgmt.groupProfileTableName,
+      groupProfileTableArn: usermgmt.groupProfileTableArn,
     });
 
     new cdk.CfnOutput(this, 'ApiEndpoint', {
