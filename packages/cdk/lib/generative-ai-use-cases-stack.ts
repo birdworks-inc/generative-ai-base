@@ -634,6 +634,16 @@ export class GenerativeAiUseCasesStack extends Stack {
       value: safeMCPConfig,
     });
 
+    new CfnOutput(this, 'StatsTableName', {
+      value: database.statsTable.tableName,
+      exportName: `${this.stackName}-StatsTableName`,
+    });
+
+    new CfnOutput(this, 'StatsTableArn', {
+      value: database.statsTable.tableArn,
+      exportName: `${this.stackName}-StatsTableArn`,
+    });
+
     this.userPool = auth.userPool;
     this.userPoolClient = auth.client;
 

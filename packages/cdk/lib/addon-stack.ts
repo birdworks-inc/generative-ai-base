@@ -10,13 +10,15 @@ import { DashboardConstruct } from '../../../../generative-ai-addons/packages/da
 export interface AddonStackProps extends cdk.StackProps {
   userPoolId: string;
   bedrockRegion: string;
+  statsTableName: string;
+  statsTableArn: string;
 }
 
 export class AddonStack extends cdk.Stack {
   constructor(scope: Construct, id: string, props: AddonStackProps) {
     super(scope, id, props);
 
-    const { userPoolId, bedrockRegion } = props;
+    const { userPoolId, bedrockRegion, statsTableName, statsTableArn } = props;
 
     const restApi = new apigateway.RestApi(this, 'Api', {
       deployOptions: { stageName: 'api' },
@@ -44,6 +46,8 @@ export class AddonStack extends cdk.Stack {
       restApi,
       authorizer,
       bedrockRegion,
+      statsTableName,
+      statsTableArn,
     });
     const usermgmt = new UsermgmtConstruct(this, 'Usermgmt', {
       restApi,
@@ -57,10 +61,16 @@ export class AddonStack extends cdk.Stack {
       profileTableName: usermgmt.profileTableName,
       profileTableArn: usermgmt.profileTableArn,
       userPoolId,
+      statsTableName,
+      statsTableArn,
     });
     new DashboardConstruct(this, 'Dashboard', {
       restApi,
       authorizer,
+      statsTableName,
+      statsTableArn,
+      profileTableName: usermgmt.profileTableName,
+      profileTableArn: usermgmt.profileTableArn,
     });
 
     new cdk.CfnOutput(this, 'ApiEndpoint', {
