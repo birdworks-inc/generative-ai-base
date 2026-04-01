@@ -26,6 +26,7 @@
     "@birdworks-inc/genu-addon-chirp-web": "^0.1.22",
     "@birdworks-inc/genu-addon-dashboard-web": "^0.1.6",
     "@birdworks-inc/genu-addon-labeler-web": "^0.1.27",
+    "@birdworks-inc/genu-addon-quill-web": "^0.1.0",
     "@birdworks-inc/genu-addon-usermgmt-web": "^0.1.14",
     "@headlessui/react": "^1.7.18",
     "@radix-ui/react-dialog": "^1.0.5",

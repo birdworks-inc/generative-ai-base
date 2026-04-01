@@ -60,6 +60,7 @@
     "@birdworks-inc/genu-addon-chirp-web": "^0.1.23",
     "@birdworks-inc/genu-addon-dashboard-web": "^0.1.7",
     "@birdworks-inc/genu-addon-kit-web": "^0.1.0",
+    "@birdworks-inc/genu-addon-quill-web": "^0.1.0",
     "@birdworks-inc/genu-addon-labeler-web": "^0.1.28",
     "@birdworks-inc/genu-addon-usermgmt-web": "^0.1.15",
     "rehype-katex": "^7.0.1",
