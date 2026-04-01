@@ -6,6 +6,7 @@ import { LabelerConstruct } from '../../../../generative-ai-addons/packages/labe
 import { UsermgmtConstruct } from '../../../../generative-ai-addons/packages/usermgmt/cdk/lib';
 import { ChirpConstruct } from '../../../../generative-ai-addons/packages/chirp/cdk/lib';
 import { DashboardConstruct } from '../../../../generative-ai-addons/packages/dashboard/cdk/lib';
+import { QuillConstruct } from '../../../../generative-ai-addons/packages/quill/cdk/lib';
 
 export interface AddonStackProps extends cdk.StackProps {
   userPoolId: string;
@@ -73,6 +74,16 @@ export class AddonStack extends cdk.Stack {
       profileTableArn: usermgmt.profileTableArn,
       groupProfileTableName: usermgmt.groupProfileTableName,
       groupProfileTableArn: usermgmt.groupProfileTableArn,
+    });
+
+    const quill = new QuillConstruct(this, 'Quill', {
+      restApi,
+      authorizer,
+      bedrockRegion,
+    });
+
+    new cdk.CfnOutput(this, 'QuillWebSocketEndpoint', {
+      value: quill.webSocketApiEndpoint,
     });
 
     new cdk.CfnOutput(this, 'ApiEndpoint', {
