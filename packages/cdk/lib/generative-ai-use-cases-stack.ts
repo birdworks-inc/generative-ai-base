@@ -495,7 +495,10 @@ export class GenerativeAiUseCasesStack extends Stack {
       value: auth.client.userPoolClientId,
     });
 
-    new CfnOutput(this, 'IdPoolId', { value: auth.idPool.identityPoolId });
+    new CfnOutput(this, 'IdPoolId', {
+      value: auth.idPool.identityPoolId,
+      exportName: `${this.stackName}-IdPoolId`,
+    });
 
     new CfnOutput(this, 'PredictStreamFunctionArn', {
       value: api.predictStreamFunction.functionArn,

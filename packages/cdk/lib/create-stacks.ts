@@ -322,6 +322,9 @@ export const createStacks = (app: cdk.App, params: ProcessedStackInput) => {
     statsTableArn: cdk.Fn.importValue(
       `GenerativeAiUseCasesStack${updatedParams.env}-StatsTableArn`
     ),
+    identityPoolId: cdk.Fn.importValue(
+      `GenerativeAiUseCasesStack${updatedParams.env}-IdPoolId`
+    ),
   });
 
   const dashboardStack = updatedParams.dashboard

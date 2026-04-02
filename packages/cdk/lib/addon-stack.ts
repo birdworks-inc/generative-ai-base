@@ -13,13 +13,20 @@ export interface AddonStackProps extends cdk.StackProps {
   bedrockRegion: string;
   statsTableName: string;
   statsTableArn: string;
+  identityPoolId: string;
 }
 
 export class AddonStack extends cdk.Stack {
   constructor(scope: Construct, id: string, props: AddonStackProps) {
     super(scope, id, props);
 
-    const { userPoolId, bedrockRegion, statsTableName, statsTableArn } = props;
+    const {
+      userPoolId,
+      bedrockRegion,
+      statsTableName,
+      statsTableArn,
+      identityPoolId,
+    } = props;
 
     const restApi = new apigateway.RestApi(this, 'Api', {
       deployOptions: { stageName: 'api' },
@@ -80,6 +87,7 @@ export class AddonStack extends cdk.Stack {
       restApi,
       authorizer,
       bedrockRegion,
+      identityPoolId,
     });
 
     new cdk.CfnOutput(this, 'QuillWebSocketEndpoint', {
