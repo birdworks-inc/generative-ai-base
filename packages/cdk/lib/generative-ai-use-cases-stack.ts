@@ -472,13 +472,19 @@ export class GenerativeAiUseCasesStack extends Stack {
       value: api.fileBucket.bucketName,
     });
 
-    new CfnOutput(this, 'UserPoolId', { value: auth.userPool.userPoolId });
+    new CfnOutput(this, 'UserPoolId', {
+      value: auth.userPool.userPoolId,
+      exportName: `${this.stackName}-UserPoolId`,
+    });
 
     new CfnOutput(this, 'UserPoolClientId', {
       value: auth.client.userPoolClientId,
     });
 
-    new CfnOutput(this, 'IdPoolId', { value: auth.idPool.identityPoolId });
+    new CfnOutput(this, 'IdPoolId', {
+      value: auth.idPool.identityPoolId,
+      exportName: `${this.stackName}-IdPoolId`,
+    });
 
     new CfnOutput(this, 'PredictStreamFunctionArn', {
       value: api.predictStreamFunction.functionArn,
@@ -615,6 +621,16 @@ export class GenerativeAiUseCasesStack extends Stack {
 
     new CfnOutput(this, 'McpServersConfig', {
       value: safeMCPConfig,
+    });
+
+    new CfnOutput(this, 'StatsTableName', {
+      value: database.statsTable.tableName,
+      exportName: `${this.stackName}-StatsTableName`,
+    });
+
+    new CfnOutput(this, 'StatsTableArn', {
+      value: database.statsTable.tableArn,
+      exportName: `${this.stackName}-StatsTableArn`,
     });
 
     this.userPool = auth.userPool;

@@ -14,6 +14,7 @@ import { ApplicationInferenceProfileStack } from './application-inference-profil
 import { ClosedNetworkStack } from './closed-network-stack';
 import { RemoteOutputs } from 'cdk-remote-stack';
 import { REMOTE_OUTPUT_KEYS } from './remote-output-keys';
+import { AddonStack } from './addon-stack';
 
 class DeletionPolicySetter implements cdk.IAspect {
   constructor(private readonly policy: cdk.RemovalPolicy) {}
@@ -304,6 +305,27 @@ export const createStacks = (app: cdk.App, params: ProcessedStackInput) => {
   cdk.Aspects.of(generativeAiUseCasesStack).add(
     new DeletionPolicySetter(cdk.RemovalPolicy.DESTROY)
   );
+
+  // Addon integration stack
+  new AddonStack(app, `AddonStack${updatedParams.env}`, {
+    env: {
+      account: updatedParams.account,
+      region: updatedParams.region,
+    },
+    bedrockRegion: updatedParams.modelRegion,
+    userPoolId: cdk.Fn.importValue(
+      `GenerativeAiUseCasesStack${updatedParams.env}-UserPoolId`
+    ),
+    statsTableName: cdk.Fn.importValue(
+      `GenerativeAiUseCasesStack${updatedParams.env}-StatsTableName`
+    ),
+    statsTableArn: cdk.Fn.importValue(
+      `GenerativeAiUseCasesStack${updatedParams.env}-StatsTableArn`
+    ),
+    identityPoolId: cdk.Fn.importValue(
+      `GenerativeAiUseCasesStack${updatedParams.env}-IdPoolId`
+    ),
+  });
 
   const dashboardStack = updatedParams.dashboard
     ? new DashboardStack(

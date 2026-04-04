@@ -1,4 +1,5 @@
 import { Stack, RemovalPolicy, CfnResource, Duration } from 'aws-cdk-lib';
+import * as ssm from 'aws-cdk-lib/aws-ssm';
 import { Construct } from 'constructs';
 import {
   CloudFrontToS3,
@@ -255,7 +256,12 @@ export class Web extends Construct {
       destinationBucket: webBucket,
       distribution: distribution,
       outputSourceDirectory: './packages/web/dist',
-      buildCommands: ['npm ci', 'npm run web:build'],
+      buildCommands: [
+        'echo "@birdworks-inc:registry=https://npm.pkg.github.com" >> .npmrc',
+        'echo "//npm.pkg.github.com/:_authToken=${NODE_AUTH_TOKEN}" >> .npmrc',
+        'npm ci',
+        'npm run web:build',
+      ],
       buildEnvironment: {
         NODE_OPTIONS: '--max-old-space-size=4096',
         VITE_APP_API_ENDPOINT: props.apiEndpointUrl,
@@ -314,6 +320,10 @@ export class Web extends Construct {
         ),
         VITE_APP_BRANDING_LOGO_PATH: props.brandingConfig?.logoPath ?? '',
         VITE_APP_BRANDING_TITLE: props.brandingConfig?.title ?? '',
+        NODE_AUTH_TOKEN: ssm.StringParameter.valueForStringParameter(
+          this,
+          '/genu/github-packages-token'
+        ),
       },
     });
     // Enhance computing resources

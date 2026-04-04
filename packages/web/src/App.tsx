@@ -38,6 +38,8 @@ import useScreen from './hooks/useScreen';
 import { optimizePromptEnabled } from './hooks/useOptimizePrompt';
 import useUseCases from './hooks/useUseCases';
 import { useTranslation } from 'react-i18next';
+import { addonRegistry } from './addons/registry';
+import './addons/index';
 
 const ragEnabled: boolean = import.meta.env.VITE_APP_RAG_ENABLED === 'true';
 const ragKnowledgeBaseEnabled: boolean =
@@ -282,6 +284,12 @@ const App: React.FC = () => {
           display: 'tool' as const,
         }
       : null,
+    ...addonRegistry.map((addon) => ({
+      label: addon.label,
+      to: addon.to,
+      icon: addon.icon ?? <PiGear />,
+      display: addon.display,
+    })),
   ].flatMap((i) => (i !== null ? [i] : []));
 
   const label = useMemo(() => {
