@@ -37,6 +37,22 @@ export class AddonStack extends cdk.Stack {
       cloudWatchRole: true,
     });
 
+    // Add CORS headers to Gateway error responses (4XX/5XX)
+    restApi.addGatewayResponse('Default4XX', {
+      type: apigateway.ResponseType.DEFAULT_4XX,
+      responseHeaders: {
+        'Access-Control-Allow-Origin': "'*'",
+        'Access-Control-Allow-Headers': "'Content-Type,Authorization'",
+      },
+    });
+    restApi.addGatewayResponse('Default5XX', {
+      type: apigateway.ResponseType.DEFAULT_5XX,
+      responseHeaders: {
+        'Access-Control-Allow-Origin': "'*'",
+        'Access-Control-Allow-Headers': "'Content-Type,Authorization'",
+      },
+    });
+
     const userPool = cognito.UserPool.fromUserPoolId(
       this,
       'UserPool',
