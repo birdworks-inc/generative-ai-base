@@ -1,4 +1,4 @@
-import { Stack, StackProps, CfnOutput, Duration } from 'aws-cdk-lib';
+import { Stack, StackProps, CfnOutput, Duration, Fn } from 'aws-cdk-lib';
 import { Construct } from 'constructs';
 import {
   Auth,
@@ -346,6 +346,10 @@ export class GenerativeAiUseCasesStack extends Stack {
       webBucket: props.webBucket,
       // Branding
       brandingConfig: params.brandingConfig,
+      // Addon
+      addonApiEndpointUrl: Fn.importValue(
+        `AddonStack${params.env}-ApiEndpoint`
+      ),
     });
 
     // RAG
