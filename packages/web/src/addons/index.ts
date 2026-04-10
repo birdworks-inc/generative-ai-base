@@ -4,9 +4,11 @@ import { UsermgmtAddon } from '@birdworks-inc/genu-addon-usermgmt-web';
 import { ChirpAddon } from '@birdworks-inc/genu-addon-chirp-web';
 import { DashboardAddon } from '@birdworks-inc/genu-addon-dashboard-web';
 import { QuillAddon } from '@birdworks-inc/genu-addon-quill-web';
+import { RookAddon } from '@birdworks-inc/genu-addon-rook-web';
 
 addonRegistry.push(LabelerAddon);
 addonRegistry.push(UsermgmtAddon);
 addonRegistry.push(ChirpAddon);
 addonRegistry.push(DashboardAddon);
 addonRegistry.push(QuillAddon);
+addonRegistry.push(RookAddon);

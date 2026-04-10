@@ -7,6 +7,7 @@ import { UsermgmtConstruct } from '../../../../generative-ai-addons/packages/use
 import { ChirpConstruct } from '../../../../generative-ai-addons/packages/chirp/cdk/lib';
 import { DashboardConstruct } from '../../../../generative-ai-addons/packages/dashboard/cdk/lib';
 import { QuillConstruct } from '../../../../generative-ai-addons/packages/quill/cdk/lib';
+import { RookConstruct } from '../../../../generative-ai-addons/packages/rook/cdk/lib';
 
 export interface AddonStackProps extends cdk.StackProps {
   userPoolId: string;
@@ -104,6 +105,12 @@ export class AddonStack extends cdk.Stack {
       authorizer,
       bedrockRegion,
       identityPoolId,
+    });
+
+    new RookConstruct(this, 'Rook', {
+      restApi,
+      authorizer,
+      bedrockRegion,
     });
 
     new cdk.CfnOutput(this, 'QuillWebSocketEndpoint', {
