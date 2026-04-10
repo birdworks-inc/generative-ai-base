@@ -307,6 +307,13 @@ export const createStacks = (app: cdk.App, params: ProcessedStackInput) => {
   );
 
   // Addon integration stack
+  // Extract the GenU CloudFront host from the imported WebUrl
+  // (the WebUrl is "https://xxx.cloudfront.net", we only need the host)
+  const genuWebUrl = cdk.Fn.importValue(
+    `GenerativeAiUseCasesStack${updatedParams.env}-WebUrl`
+  );
+  const genuCloudFrontDomain = cdk.Fn.select(2, cdk.Fn.split('/', genuWebUrl));
+
   new AddonStack(app, `AddonStack${updatedParams.env}`, {
     env: {
       account: updatedParams.account,
@@ -315,6 +322,9 @@ export const createStacks = (app: cdk.App, params: ProcessedStackInput) => {
     bedrockRegion: updatedParams.modelRegion,
     userPoolId: cdk.Fn.importValue(
       `GenerativeAiUseCasesStack${updatedParams.env}-UserPoolId`
+    ),
+    userPoolClientId: cdk.Fn.importValue(
+      `GenerativeAiUseCasesStack${updatedParams.env}-UserPoolClientId`
     ),
     statsTableName: cdk.Fn.importValue(
       `GenerativeAiUseCasesStack${updatedParams.env}-StatsTableName`
@@ -325,6 +335,7 @@ export const createStacks = (app: cdk.App, params: ProcessedStackInput) => {
     identityPoolId: cdk.Fn.importValue(
       `GenerativeAiUseCasesStack${updatedParams.env}-IdPoolId`
     ),
+    genuCloudFrontDomain,
   });
 
   const dashboardStack = updatedParams.dashboard

@@ -8,13 +8,17 @@ import { ChirpConstruct } from '../../../../generative-ai-addons/packages/chirp/
 import { DashboardConstruct } from '../../../../generative-ai-addons/packages/dashboard/cdk/lib';
 import { QuillConstruct } from '../../../../generative-ai-addons/packages/quill/cdk/lib';
 import { RookConstruct } from '../../../../generative-ai-addons/packages/rook/cdk/lib';
+import { NestPortalConstruct } from '../../../../generative-ai-addons/packages/nest-portal/cdk/lib';
 
 export interface AddonStackProps extends cdk.StackProps {
   userPoolId: string;
+  userPoolClientId: string;
   bedrockRegion: string;
   statsTableName: string;
   statsTableArn: string;
   identityPoolId: string;
+  // Existing GenU CloudFront domain (e.g. d6i6tf9xwxzaj.cloudfront.net)
+  genuCloudFrontDomain: string;
 }
 
 export class AddonStack extends cdk.Stack {
@@ -23,10 +27,12 @@ export class AddonStack extends cdk.Stack {
 
     const {
       userPoolId,
+      userPoolClientId,
       bedrockRegion,
       statsTableName,
       statsTableArn,
       identityPoolId,
+      genuCloudFrontDomain,
     } = props;
 
     const restApi = new apigateway.RestApi(this, 'Api', {
@@ -108,6 +114,16 @@ export class AddonStack extends cdk.Stack {
     });
 
     new RookConstruct(this, 'Rook', {
+      restApi,
+      authorizer,
+      bedrockRegion,
+    });
+
+    new NestPortalConstruct(this, 'NestPortal', {
+      userPoolId,
+      userPoolClientId,
+      identityPoolId,
+      genuCloudFrontDomain,
       restApi,
       authorizer,
       bedrockRegion,

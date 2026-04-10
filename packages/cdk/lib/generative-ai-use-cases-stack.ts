@@ -476,6 +476,7 @@ export class GenerativeAiUseCasesStack extends Stack {
 
     new CfnOutput(this, 'WebUrl', {
       value: web.webUrl,
+      exportName: `${this.stackName}-WebUrl`,
     });
 
     new CfnOutput(this, 'ApiEndpoint', {
@@ -493,6 +494,7 @@ export class GenerativeAiUseCasesStack extends Stack {
 
     new CfnOutput(this, 'UserPoolClientId', {
       value: auth.client.userPoolClientId,
+      exportName: `${this.stackName}-UserPoolClientId`,
     });
 
     new CfnOutput(this, 'IdPoolId', {

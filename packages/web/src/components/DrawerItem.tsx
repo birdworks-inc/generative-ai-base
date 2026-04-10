@@ -11,6 +11,8 @@ export type DrawerItemProps = BaseProps & {
   icon: JSX.Element;
   sub?: string;
   settingVisibility?: boolean;
+  // If true, navigate via plain <a href> instead of react-router Link.
+  external?: boolean;
 };
 
 const DrawerItem: React.FC<DrawerItemProps> = (props) => {
@@ -42,22 +44,41 @@ const DrawerItem: React.FC<DrawerItemProps> = (props) => {
           {props.settingVisibility && (
             <Switch checked={visibility} onSwitch={setVisibility} label="" />
           )}
-          <Link
-            className={`hover:bg-aws-sky flex h-8 w-full items-center rounded p-2 ${
-              location.pathname === props.to && 'bg-aws-sky'
-            } ${props.className} ${props.settingVisibility ? 'pl-2' : ''}`}
-            to={props.to}
-            onClick={onClick}>
-            {!props.settingVisibility && (
-              <span className="mr-2">{props.icon}</span>
-            )}
-            <div className="flex w-full items-center justify-between">
-              <span>{props.label}</span>
-              {props.sub && (
-                <span className="text-xs text-gray-300">{props.sub}</span>
+          {props.external ? (
+            <a
+              className={`hover:bg-aws-sky flex h-8 w-full items-center rounded p-2 ${
+                props.className
+              } ${props.settingVisibility ? 'pl-2' : ''}`}
+              href={props.to}
+              onClick={onClick}>
+              {!props.settingVisibility && (
+                <span className="mr-2">{props.icon}</span>
               )}
-            </div>
-          </Link>
+              <div className="flex w-full items-center justify-between">
+                <span>{props.label}</span>
+                {props.sub && (
+                  <span className="text-xs text-gray-300">{props.sub}</span>
+                )}
+              </div>
+            </a>
+          ) : (
+            <Link
+              className={`hover:bg-aws-sky flex h-8 w-full items-center rounded p-2 ${
+                location.pathname === props.to && 'bg-aws-sky'
+              } ${props.className} ${props.settingVisibility ? 'pl-2' : ''}`}
+              to={props.to}
+              onClick={onClick}>
+              {!props.settingVisibility && (
+                <span className="mr-2">{props.icon}</span>
+              )}
+              <div className="flex w-full items-center justify-between">
+                <span>{props.label}</span>
+                {props.sub && (
+                  <span className="text-xs text-gray-300">{props.sub}</span>
+                )}
+              </div>
+            </Link>
+          )}
         </div>
       )}
     </>

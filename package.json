@@ -44,11 +44,7 @@
     "prettier": "^3.2.5"
   },
   "workspaces": [
-    "packages/*",
-    "../generative-ai-addons/packages/labeler/cdk",
-    "../generative-ai-addons/packages/usermgmt/cdk",
-    "../generative-ai-addons/packages/chirp/cdk",
-    "../generative-ai-addons/packages/dashboard/cdk"
+    "packages/*"
   ],
   "lint-staged": {
     "**/*": [
