@@ -1,14 +1,10 @@
+// Chirp / Quill / Dashboard have moved to the Nest Portal addon registry.
+// See generative-ai-addons/packages/nest-portal/web/src/addons/index.ts
 import { addonRegistry } from './registry';
 import { LabelerAddon } from '@birdworks-inc/genu-addon-labeler-web';
 import { UsermgmtAddon } from '@birdworks-inc/genu-addon-usermgmt-web';
-import { ChirpAddon } from '@birdworks-inc/genu-addon-chirp-web';
-import { DashboardAddon } from '@birdworks-inc/genu-addon-dashboard-web';
-import { QuillAddon } from '@birdworks-inc/genu-addon-quill-web';
 import { RookAddon } from '@birdworks-inc/genu-addon-rook-web';
 
 addonRegistry.push(LabelerAddon);
 addonRegistry.push(UsermgmtAddon);
-addonRegistry.push(ChirpAddon);
-addonRegistry.push(DashboardAddon);
-addonRegistry.push(QuillAddon);
 addonRegistry.push(RookAddon);
