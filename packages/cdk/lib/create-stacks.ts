@@ -314,7 +314,7 @@ export const createStacks = (app: cdk.App, params: ProcessedStackInput) => {
   );
   const genuCloudFrontDomain = cdk.Fn.select(2, cdk.Fn.split('/', genuWebUrl));
 
-  new AddonStack(app, `AddonStack${updatedParams.env}`, {
+  const addonStack = new AddonStack(app, `AddonStack${updatedParams.env}`, {
     env: {
       account: updatedParams.account,
       region: updatedParams.region,
@@ -337,6 +337,12 @@ export const createStacks = (app: cdk.App, params: ProcessedStackInput) => {
     ),
     genuCloudFrontDomain,
   });
+
+  // AddonStack reads exported values from GenerativeAiUseCasesStack via
+  // Fn.importValue, but Fn.importValue does not create an implicit stack
+  // dependency. Add it explicitly so CDK deploys the producer first when
+  // running `cdk deploy --all`.
+  addonStack.addDependency(generativeAiUseCasesStack);
 
   const dashboardStack = updatedParams.dashboard
     ? new DashboardStack(
