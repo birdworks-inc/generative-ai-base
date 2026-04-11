@@ -409,5 +409,70 @@ function handler(event) {
     (
       build.node.findChild('Project').node.defaultChild as CfnResource
     ).addPropertyOverride('Environment.ComputeType', ComputeType.MEDIUM);
+
+    // ─── Nest Portal SPA build (only when enableNestPortal is set) ───
+    // Builds packages/nest-portal/web with Vite via pnpm and uploads the
+    // result to the Nest Portal S3 bucket under the `nest/` key prefix.
+    // The same CloudFront distribution is invalidated for `/nest/*`.
+    if (nestPortalBucket && distribution) {
+      const nestBuild = new NodejsBuild(this, 'BuildNestPortal', {
+        assets: [
+          {
+            path: '../../../generative-ai-addons',
+            exclude: [
+              '.git',
+              '.github',
+              '.gitignore',
+              '*.md',
+              'node_modules',
+              '**/node_modules',
+              '**/dist',
+              '**/dist-app',
+              '**/cdk.out',
+              '**/*.tsbuildinfo',
+              '**/target',
+              'packages/chirp-connector/src-tauri/target',
+            ],
+          },
+        ],
+        destinationBucket: nestPortalBucket,
+        distribution,
+        // Vite emits into `dist-app/nest/`, so uploading the whole
+        // `dist-app/` directory lands the files under the `nest/` S3 key
+        // prefix expected by the /nest/* behavior.
+        outputSourceDirectory: './packages/nest-portal/web/dist-app',
+        buildCommands: [
+          'corepack enable',
+          'corepack prepare pnpm@10.33.0 --activate',
+          'echo "@birdworks-inc:registry=https://npm.pkg.github.com" >> .npmrc',
+          'echo "//npm.pkg.github.com/:_authToken=${NODE_AUTH_TOKEN}" >> .npmrc',
+          'pnpm install --frozen-lockfile',
+          'pnpm --filter @birdworks-inc/nest-portal-web build',
+        ],
+        buildEnvironment: {
+          NODE_OPTIONS: '--max-old-space-size=4096',
+          // GenU convention env vars consumed by addon web packages
+          VITE_APP_API_ENDPOINT: props.apiEndpointUrl,
+          VITE_APP_ADDON_API_ENDPOINT: props.addonApiEndpointUrl ?? '',
+          VITE_APP_REGION: Stack.of(this).region,
+          VITE_APP_USER_POOL_ID: props.userPoolId,
+          VITE_APP_USER_POOL_CLIENT_ID: props.userPoolClientId,
+          VITE_APP_IDENTITY_POOL_ID: props.idPoolId,
+          // Nest Portal native env vars (kept as fallback)
+          VITE_USER_POOL_ID: props.userPoolId,
+          VITE_USER_POOL_CLIENT_ID: props.userPoolClientId,
+          VITE_IDENTITY_POOL_ID: props.idPoolId,
+          VITE_REGION: Stack.of(this).region,
+          VITE_ADDON_API_ENDPOINT: props.addonApiEndpointUrl ?? '',
+          NODE_AUTH_TOKEN: ssm.StringParameter.valueForStringParameter(
+            this,
+            '/genu/github-packages-token'
+          ),
+        },
+      });
+      (
+        nestBuild.node.findChild('Project').node.defaultChild as CfnResource
+      ).addPropertyOverride('Environment.ComputeType', ComputeType.MEDIUM);
+    }
   }
 }
