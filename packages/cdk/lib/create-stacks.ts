@@ -291,6 +291,9 @@ export const createStacks = (app: cdk.App, params: ProcessedStackInput) => {
       vpc: closedNetworkStack?.vpc,
       apiGatewayVpcEndpoint: closedNetworkStack?.apiGatewayVpcEndpoint,
       webBucket: closedNetworkStack?.webBucket,
+      // Nest Portal: create the S3 bucket and `/nest/*` behavior in
+      // the same CloudFront distribution as GenU.
+      enableNestPortal: true,
     }
   );
 
@@ -307,13 +310,6 @@ export const createStacks = (app: cdk.App, params: ProcessedStackInput) => {
   );
 
   // Addon integration stack
-  // Extract the GenU CloudFront host from the imported WebUrl
-  // (the WebUrl is "https://xxx.cloudfront.net", we only need the host)
-  const genuWebUrl = cdk.Fn.importValue(
-    `GenerativeAiUseCasesStack${updatedParams.env}-WebUrl`
-  );
-  const genuCloudFrontDomain = cdk.Fn.select(2, cdk.Fn.split('/', genuWebUrl));
-
   const addonStack = new AddonStack(app, `AddonStack${updatedParams.env}`, {
     env: {
       account: updatedParams.account,
@@ -335,7 +331,9 @@ export const createStacks = (app: cdk.App, params: ProcessedStackInput) => {
     identityPoolId: cdk.Fn.importValue(
       `GenerativeAiUseCasesStack${updatedParams.env}-IdPoolId`
     ),
-    genuCloudFrontDomain,
+    nestPortalBucketName: cdk.Fn.importValue(
+      `GenerativeAiUseCasesStack${updatedParams.env}-NestPortalBucketName`
+    ),
   });
 
   // AddonStack reads exported values from GenerativeAiUseCasesStack via

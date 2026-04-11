@@ -17,8 +17,8 @@ export interface AddonStackProps extends cdk.StackProps {
   statsTableName: string;
   statsTableArn: string;
   identityPoolId: string;
-  // Existing GenU CloudFront domain (e.g. d6i6tf9xwxzaj.cloudfront.net)
-  genuCloudFrontDomain: string;
+  // Nest Portal S3 bucket name (created by GenU stack via enableNestPortal)
+  nestPortalBucketName: string;
 }
 
 export class AddonStack extends cdk.Stack {
@@ -32,7 +32,7 @@ export class AddonStack extends cdk.Stack {
       statsTableName,
       statsTableArn,
       identityPoolId,
-      genuCloudFrontDomain,
+      nestPortalBucketName,
     } = props;
 
     const restApi = new apigateway.RestApi(this, 'Api', {
@@ -120,13 +120,11 @@ export class AddonStack extends cdk.Stack {
     });
 
     new NestPortalConstruct(this, 'NestPortal', {
+      bucketName: nestPortalBucketName,
       userPoolId,
       userPoolClientId,
       identityPoolId,
-      genuCloudFrontDomain,
-      restApi,
-      authorizer,
-      bedrockRegion,
+      region: this.region,
     });
 
     new cdk.CfnOutput(this, 'QuillWebSocketEndpoint', {

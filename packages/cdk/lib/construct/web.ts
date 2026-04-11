@@ -6,12 +6,17 @@ import {
   CloudFrontToS3Props,
 } from '@aws-solutions-constructs/aws-cloudfront-s3';
 import {
+  BehaviorOptions,
   CfnDistribution,
   ResponseHeadersPolicy,
   HeadersFrameOption,
   HeadersReferrerPolicy,
   IDistribution,
+  ViewerProtocolPolicy,
+  CachePolicy,
+  AllowedMethods,
 } from 'aws-cdk-lib/aws-cloudfront';
+import { S3BucketOrigin } from 'aws-cdk-lib/aws-cloudfront-origins';
 import { NodejsBuild } from '@cdklabs/deploy-time-build';
 import * as s3 from 'aws-cdk-lib/aws-s3';
 import { ARecord, HostedZone, RecordTarget } from 'aws-cdk-lib/aws-route53';
@@ -76,17 +81,35 @@ export interface WebProps {
     title?: string;
   };
   readonly addonApiEndpointUrl?: string;
+  // If true, create a Nest Portal S3 bucket and attach `/nest/*` behavior
+  // to the same CloudFront distribution.
+  readonly enableNestPortal?: boolean;
 }
 
 export class Web extends Construct {
   // public readonly distribution: Distribution;
   public readonly webUrl: string;
+  public readonly nestPortalBucket?: s3.Bucket;
 
   constructor(scope: Construct, id: string, props: WebProps) {
     super(scope, id);
 
     let distribution: IDistribution | undefined = undefined;
     let webBucket: s3.IBucket;
+
+    // ─── Nest Portal bucket (created upfront so its origin can be wired
+    //     into the CloudFront distribution below) ───────────────────────
+    let nestPortalBucket: s3.Bucket | undefined;
+    if (props.enableNestPortal) {
+      nestPortalBucket = new s3.Bucket(this, 'NestPortalBucket', {
+        blockPublicAccess: s3.BlockPublicAccess.BLOCK_ALL,
+        encryption: s3.BucketEncryption.S3_MANAGED,
+        autoDeleteObjects: true,
+        removalPolicy: RemovalPolicy.DESTROY,
+        enforceSSL: true,
+      });
+      this.nestPortalBucket = nestPortalBucket;
+    }
 
     const commonBucketProps: s3.BucketProps = {
       blockPublicAccess: s3.BlockPublicAccess.BLOCK_ALL,
@@ -143,6 +166,20 @@ export class Web extends Construct {
         }
       );
 
+      // Optional Nest Portal additional behavior under `/nest/*`.
+      // S3BucketOrigin.withOriginAccessControl creates an OAC and the
+      // matching bucket policy automatically when the distribution is built.
+      const nestAdditionalBehaviors: Record<string, BehaviorOptions> = {};
+      if (nestPortalBucket) {
+        nestAdditionalBehaviors['/nest/*'] = {
+          origin: S3BucketOrigin.withOriginAccessControl(nestPortalBucket),
+          viewerProtocolPolicy: ViewerProtocolPolicy.REDIRECT_TO_HTTPS,
+          cachePolicy: CachePolicy.CACHING_OPTIMIZED,
+          allowedMethods: AllowedMethods.ALLOW_GET_HEAD_OPTIONS,
+          responseHeadersPolicy,
+        };
+      }
+
       const cloudFrontToS3Props: CloudFrontToS3Props = {
         insertHttpSecurityHeaders: false,
         loggingBucketProps: commonBucketProps,
@@ -153,6 +190,7 @@ export class Web extends Construct {
           defaultBehavior: {
             responseHeadersPolicy: responseHeadersPolicy,
           },
+          additionalBehaviors: nestAdditionalBehaviors,
           errorResponses: [
             {
               httpStatus: 403,

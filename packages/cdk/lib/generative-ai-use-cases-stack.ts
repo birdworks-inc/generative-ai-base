@@ -63,6 +63,7 @@ export interface GenerativeAiUseCasesStackProps extends StackProps {
   readonly vpc?: IVpc;
   readonly apiGatewayVpcEndpoint?: InterfaceVpcEndpoint;
   readonly webBucket?: Bucket;
+  readonly enableNestPortal?: boolean;
 }
 
 export class GenerativeAiUseCasesStack extends Stack {
@@ -358,6 +359,7 @@ export class GenerativeAiUseCasesStack extends Stack {
       hostedZoneId: params.hostedZoneId,
       // Closed network
       webBucket: props.webBucket,
+      enableNestPortal: props.enableNestPortal,
       // Branding
       brandingConfig: params.brandingConfig,
     });
@@ -478,6 +480,13 @@ export class GenerativeAiUseCasesStack extends Stack {
       value: web.webUrl,
       exportName: `${this.stackName}-WebUrl`,
     });
+
+    if (web.nestPortalBucket) {
+      new CfnOutput(this, 'NestPortalBucketName', {
+        value: web.nestPortalBucket.bucketName,
+        exportName: `${this.stackName}-NestPortalBucketName`,
+      });
+    }
 
     new CfnOutput(this, 'ApiEndpoint', {
       value: api.api.url,
