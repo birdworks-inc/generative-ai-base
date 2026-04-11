@@ -45,6 +45,13 @@ export default defineConfig(({ mode }) => ({
         globPatterns: ['**/*.{js,css,html,ico,png,svg}'],
         swDest: 'dist/sw.js',
         maximumFileSizeToCacheInBytes: 5000000,
+        // Activate the new service worker immediately so that users do not
+        // see stale precached HTML on the first load after a deploy.
+        skipWaiting: true,
+        clientsClaim: true,
+        cleanupOutdatedCaches: true,
+        // Do not let the GenU service worker intercept Nest Portal routes.
+        navigateFallbackDenylist: [/^\/nest\//],
       },
       manifest: {
         name: 'Generative AI Use Cases',

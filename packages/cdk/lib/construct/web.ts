@@ -6,15 +6,19 @@ import {
   CloudFrontToS3Props,
 } from '@aws-solutions-constructs/aws-cloudfront-s3';
 import {
+  AllowedMethods,
   BehaviorOptions,
+  CachePolicy,
   CfnDistribution,
-  ResponseHeadersPolicy,
+  Function as CfFunction,
+  FunctionCode,
+  FunctionEventType,
+  FunctionRuntime,
   HeadersFrameOption,
   HeadersReferrerPolicy,
   IDistribution,
+  ResponseHeadersPolicy,
   ViewerProtocolPolicy,
-  CachePolicy,
-  AllowedMethods,
 } from 'aws-cdk-lib/aws-cloudfront';
 import { S3BucketOrigin } from 'aws-cdk-lib/aws-cloudfront-origins';
 import { NodejsBuild } from '@cdklabs/deploy-time-build';
@@ -167,16 +171,48 @@ export class Web extends Construct {
       );
 
       // Optional Nest Portal additional behavior under `/nest/*`.
-      // S3BucketOrigin.withOriginAccessControl creates an OAC and the
-      // matching bucket policy automatically when the distribution is built.
+      //
+      // The Nest Portal SPA is uploaded to the Nest Portal S3 bucket under
+      // the `nest/` key prefix (e.g. `nest/index.html`, `nest/assets/...`),
+      // so requests can be forwarded to S3 verbatim without URI rewriting.
+      //
+      // A CloudFront Function only rewrites SPA route refreshes
+      // (`/nest/some-page` -> `/nest/index.html`) and the trailing-slash
+      // case (`/nest/` -> `/nest/index.html`). This keeps cache keys
+      // namespaced under `/nest/...` so they cannot collide with the GenU
+      // default behavior cache.
       const nestAdditionalBehaviors: Record<string, BehaviorOptions> = {};
       if (nestPortalBucket) {
+        const nestRewriteFn = new CfFunction(this, 'NestRewriteFunction', {
+          runtime: FunctionRuntime.JS_2_0,
+          code: FunctionCode.fromInline(`
+function handler(event) {
+  var request = event.request;
+  var uri = request.uri;
+  // Trailing slash -> /nest/.../index.html
+  if (uri.endsWith('/')) {
+    uri += 'index.html';
+  } else if (uri.lastIndexOf('.') <= uri.lastIndexOf('/')) {
+    // Extension-less SPA routes -> the Nest Portal SPA shell
+    uri = '/nest/index.html';
+  }
+  request.uri = uri;
+  return request;
+}
+          `),
+        });
         nestAdditionalBehaviors['/nest/*'] = {
           origin: S3BucketOrigin.withOriginAccessControl(nestPortalBucket),
           viewerProtocolPolicy: ViewerProtocolPolicy.REDIRECT_TO_HTTPS,
           cachePolicy: CachePolicy.CACHING_OPTIMIZED,
           allowedMethods: AllowedMethods.ALLOW_GET_HEAD_OPTIONS,
           responseHeadersPolicy,
+          functionAssociations: [
+            {
+              function: nestRewriteFn,
+              eventType: FunctionEventType.VIEWER_REQUEST,
+            },
+          ],
         };
       }
 
@@ -303,6 +339,9 @@ export class Web extends Construct {
       ],
       buildEnvironment: {
         NODE_OPTIONS: '--max-old-space-size=4096',
+        // If Nest Portal is enabled, point the "← Nest" header button at
+        // the same CloudFront distribution's `/nest/` path.
+        VITE_NEST_URL: props.enableNestPortal ? '/nest/' : '',
         VITE_APP_API_ENDPOINT: props.apiEndpointUrl,
         VITE_APP_REGION: Stack.of(this).region,
         VITE_APP_USER_POOL_ID: props.userPoolId,
