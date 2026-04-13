@@ -1,7 +1,7 @@
 import React, { useMemo, useState } from 'react';
 import { BaseProps } from '../@types/common';
 import { useNavigate } from 'react-router-dom';
-import { PiMagnifyingGlass, PiGear } from 'react-icons/pi';
+import { PiArrowLeft, PiMagnifyingGlass, PiGear } from 'react-icons/pi';
 import ExpandableMenu from './ExpandableMenu';
 import ChatList from './ChatList';
 import DrawerItem, { DrawerItemProps } from './DrawerItem';
@@ -19,6 +19,8 @@ export type ItemProps = DrawerItemProps & {
 type Props = BaseProps & {
   items: ItemProps[];
 };
+
+const nestUrl = import.meta.env.VITE_NEST_URL as string | undefined;
 
 const Drawer: React.FC<Props> = (props) => {
   const { t } = useTranslation();
@@ -49,6 +51,14 @@ const Drawer: React.FC<Props> = (props) => {
   return (
     <>
       <DrawerBase>
+        {nestUrl && (
+          <a
+            href={nestUrl}
+            className="bg-aws-smile mx-3 mb-1 mt-3 flex items-center gap-2 rounded-lg px-3 py-2 text-sm font-medium text-white transition-opacity hover:opacity-80">
+            <PiArrowLeft className="shrink-0 text-base" />
+            {t('drawer.nest_portal', 'Nest Portal')}
+          </a>
+        )}
         {useCaseBuilderEnabled && settingShowUseCaseBuilder && (
           <>
             <Switch

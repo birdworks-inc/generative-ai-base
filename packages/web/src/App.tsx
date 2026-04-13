@@ -24,7 +24,6 @@ import {
   PiNotebook,
   PiGraph,
   PiMagnifyingGlass,
-  PiArrowLeft,
 } from 'react-icons/pi';
 import { Outlet } from 'react-router-dom';
 import Drawer, { ItemProps } from './components/Drawer';
@@ -54,8 +53,6 @@ const agentBuilderEnabled: boolean =
   import.meta.env.VITE_APP_AGENT_CORE_AGENT_BUILDER_ENABLED === 'true';
 const researchAgentEnabled: boolean =
   import.meta.env.VITE_APP_RESEARCH_AGENT_ENABLED === 'true';
-const nestUrl = import.meta.env.VITE_NEST_URL as string | undefined;
-
 const {
   visionEnabled,
   imageGenModelIds,
@@ -85,15 +82,6 @@ const App: React.FC = () => {
   const { enabled } = useUseCases();
 
   const items: ItemProps[] = [
-    nestUrl
-      ? {
-          label: '← Nest',
-          to: nestUrl,
-          icon: <PiArrowLeft />,
-          display: 'usecase' as const,
-          external: true,
-        }
-      : null,
     {
       label: t('navigation.home'),
       to: '/',
