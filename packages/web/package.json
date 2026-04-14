@@ -23,7 +23,6 @@
     "@aws-sdk/credential-provider-cognito-identity": "^3.972.0",
     "@aws-sdk/protocol-http": "^3.370.0",
     "@aws-sdk/signature-v4": "^3.370.0",
-    "@birdworks-inc/genu-addon-kit-web": "^0.1.0",
     "@headlessui/react": "^1.7.18",
     "@radix-ui/react-dialog": "^1.0.5",
     "@radix-ui/react-popover": "^1.0.7",

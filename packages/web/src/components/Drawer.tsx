@@ -13,7 +13,6 @@ import useUserSetting from '../hooks/useUserSetting';
 
 export type ItemProps = DrawerItemProps & {
   display: 'usecase' | 'tool' | 'none';
-  external?: boolean;
 };
 
 type Props = BaseProps & {
@@ -92,7 +91,6 @@ const Drawer: React.FC<Props> = (props) => {
               icon={item.icon}
               to={item.to}
               sub={item.sub}
-              external={item.external}
               settingVisibility={settingVisibility}
             />
           ))}
