@@ -294,6 +294,7 @@ export const createStacks = (app: cdk.App, params: ProcessedStackInput) => {
       // Nest Portal: create the S3 bucket and `/nest/*` behavior in
       // the same CloudFront distribution as GenU.
       enableNestPortal: true,
+      enabledAddons: updatedParams.enabledAddons,
     }
   );
 
@@ -334,6 +335,7 @@ export const createStacks = (app: cdk.App, params: ProcessedStackInput) => {
     nestPortalBucketName: cdk.Fn.importValue(
       `GenerativeAiUseCasesStack${updatedParams.env}-NestPortalBucketName`
     ),
+    enabledAddons: updatedParams.enabledAddons,
   });
 
   // AddonStack reads exported values from GenerativeAiUseCasesStack via

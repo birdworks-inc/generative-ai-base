@@ -64,6 +64,7 @@ export interface GenerativeAiUseCasesStackProps extends StackProps {
   readonly apiGatewayVpcEndpoint?: InterfaceVpcEndpoint;
   readonly webBucket?: Bucket;
   readonly enableNestPortal?: boolean;
+  readonly enabledAddons?: string[] | null;
 }
 
 export class GenerativeAiUseCasesStack extends Stack {
@@ -360,6 +361,7 @@ export class GenerativeAiUseCasesStack extends Stack {
       // Closed network
       webBucket: props.webBucket,
       enableNestPortal: props.enableNestPortal,
+      enabledAddons: props.enabledAddons,
       // Branding
       brandingConfig: params.brandingConfig,
     });

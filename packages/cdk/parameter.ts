@@ -30,6 +30,14 @@ const envs: Record<string, Partial<StackInput>> = {
   prod: {
     // Parameters for production environment
   },
+  Self: {
+    // In-house environment: enabledAddons controls which addons are deployed
+    enabledAddons: ['chirp', 'usermgmt', 'nestPortal'],
+  },
+  Demo: {
+    // Demo environment
+    enabledAddons: ['nestPortal'],
+  },
   // If you need other environments, customize them as needed
 };
 

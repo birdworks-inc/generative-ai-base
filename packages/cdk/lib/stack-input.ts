@@ -205,6 +205,9 @@ const baseStackInputSchema = z.object({
   closedNetworkDomainName: z.string().nullish(),
   closedNetworkCreateTestEnvironment: z.boolean().default(true),
   closedNetworkCreateResolverEndpoint: z.boolean().default(true),
+  // Addon integration: which addons to deploy in AddonStack.
+  // Unset (null/undefined) means "deploy all addons" for backward compatibility.
+  enabledAddons: z.array(z.string()).nullish(),
 });
 
 // Common Validator with refine

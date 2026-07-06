@@ -88,6 +88,10 @@ export interface WebProps {
   // If true, create a Nest Portal S3 bucket and attach `/nest/*` behavior
   // to the same CloudFront distribution.
   readonly enableNestPortal?: boolean;
+  // Which addons to enable in the Nest Portal SPA build. Undefined/null
+  // means "enable all" (backward compatible). Mirrors AddonStack's
+  // enabledAddons so the backend and frontend stay in sync.
+  readonly enabledAddons?: string[] | null;
 }
 
 export class Web extends Construct {
@@ -474,6 +478,8 @@ function handler(event) {
           VITE_IDENTITY_POOL_ID: props.idPoolId,
           VITE_REGION: Stack.of(this).region,
           VITE_ADDON_API_ENDPOINT: props.addonApiEndpointUrl ?? '',
+          // Comma-separated addon ids to enable. Unset means "enable all".
+          VITE_ENABLED_ADDONS: props.enabledAddons?.join(',') ?? '',
           NODE_AUTH_TOKEN: ssm.StringParameter.valueForStringParameter(
             this,
             '/genu/github-packages-token'
