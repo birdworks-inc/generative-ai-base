@@ -16,6 +16,15 @@
   },
   "context": {
     "env": "",
+    "enabledAddons": [
+      "chirp",
+      "usermgmt",
+      "dashboard",
+      "quill",
+      "rook",
+      "labeler",
+      "nestPortal"
+    ],
     "tagKey": null,
     "tagValue": null,
     "ragEnabled": false,
