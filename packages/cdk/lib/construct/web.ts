@@ -451,15 +451,15 @@ function handler(event) {
           'echo "@birdworks-inc:registry=https://npm.pkg.github.com" >> .npmrc',
           'echo "//npm.pkg.github.com/:_authToken=${NODE_AUTH_TOKEN}" >> .npmrc',
           'pnpm install --frozen-lockfile',
-          // Build addon web packages first so their dist/ outputs (used by
-          // tsc to resolve @birdworks-inc/genu-addon-*-web types) exist
-          // before the Nest Portal type-check runs.
+          // Build addon packages first so their dist/ outputs (used by tsc to
+          // resolve @birdworks-inc/genu-addon-*/web types) exist before the
+          // Nest Portal type-check runs.
           'pnpm --filter "@birdworks-inc/genu-addon-kit-web" run build',
-          'pnpm --filter "@birdworks-inc/genu-addon-chirp-web" run build',
-          'pnpm --filter "@birdworks-inc/genu-addon-quill-web" run build',
-          'pnpm --filter "@birdworks-inc/genu-addon-dashboard-web" run build',
-          'pnpm --filter "@birdworks-inc/genu-addon-rook-web" run build',
-          'pnpm --filter "@birdworks-inc/genu-addon-labeler-web" run build',
+          'pnpm --filter "@birdworks-inc/genu-addon-chirp" run build',
+          'pnpm --filter "@birdworks-inc/genu-addon-quill" run build',
+          'pnpm --filter "@birdworks-inc/genu-addon-dashboard" run build',
+          'pnpm --filter "@birdworks-inc/genu-addon-rook" run build',
+          'pnpm --filter "@birdworks-inc/genu-addon-labeler" run build',
           'pnpm --filter "@birdworks-inc/genu-addon-usermgmt" run build',
           'pnpm --filter @birdworks-inc/nest-portal-web run build',
         ],

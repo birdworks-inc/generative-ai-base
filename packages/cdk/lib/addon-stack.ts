@@ -2,12 +2,12 @@ import * as cdk from 'aws-cdk-lib';
 import * as apigateway from 'aws-cdk-lib/aws-apigateway';
 import * as cognito from 'aws-cdk-lib/aws-cognito';
 import { Construct } from 'constructs';
-import { LabelerConstruct } from '../../../../generative-ai-addons/packages/labeler/cdk/lib';
+import { LabelerConstruct } from '@birdworks-inc/genu-addon-labeler/cdk';
 import { UsermgmtConstruct } from '@birdworks-inc/genu-addon-usermgmt/cdk';
-import { ChirpConstruct } from '../../../../generative-ai-addons/packages/chirp/cdk/lib';
-import { DashboardConstruct } from '../../../../generative-ai-addons/packages/dashboard/cdk/lib';
-import { QuillConstruct } from '../../../../generative-ai-addons/packages/quill/cdk/lib';
-import { RookConstruct } from '../../../../generative-ai-addons/packages/rook/cdk/lib';
+import { ChirpConstruct } from '@birdworks-inc/genu-addon-chirp/cdk';
+import { DashboardConstruct } from '@birdworks-inc/genu-addon-dashboard/cdk';
+import { QuillConstruct } from '@birdworks-inc/genu-addon-quill/cdk';
+import { RookConstruct } from '@birdworks-inc/genu-addon-rook/cdk';
 import { NestPortalConstruct } from '@birdworks-inc/genu-addon-nest-portal-cdk';
 
 export interface AddonStackProps extends cdk.StackProps {
