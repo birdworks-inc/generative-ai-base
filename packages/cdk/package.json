@@ -51,6 +51,8 @@
     "@smithy/node-http-handler": "^4.0.4",
     "aws-amplify": "^6.14.2",
     "aws-cdk-lib": "^2.221.0",
+    "@birdworks-inc/genu-addon-usermgmt": "^0.1.0",
+    "@birdworks-inc/genu-addon-nest-portal-cdk": "^0.1.0",
     "aws-jwt-verify": "^4.0.0",
     "cdk-remote-stack": "^2.1.0",
     "constructs": "^10.3.0",

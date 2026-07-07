@@ -460,7 +460,7 @@ function handler(event) {
           'pnpm --filter "@birdworks-inc/genu-addon-dashboard-web" run build',
           'pnpm --filter "@birdworks-inc/genu-addon-rook-web" run build',
           'pnpm --filter "@birdworks-inc/genu-addon-labeler-web" run build',
-          'pnpm --filter "@birdworks-inc/genu-addon-usermgmt-web" run build',
+          'pnpm --filter "@birdworks-inc/genu-addon-usermgmt" run build',
           'pnpm --filter @birdworks-inc/nest-portal-web run build',
         ],
         buildEnvironment: {

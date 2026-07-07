@@ -3,12 +3,12 @@ import * as apigateway from 'aws-cdk-lib/aws-apigateway';
 import * as cognito from 'aws-cdk-lib/aws-cognito';
 import { Construct } from 'constructs';
 import { LabelerConstruct } from '../../../../generative-ai-addons/packages/labeler/cdk/lib';
-import { UsermgmtConstruct } from '../../../../generative-ai-addons/packages/usermgmt/cdk/lib';
+import { UsermgmtConstruct } from '@birdworks-inc/genu-addon-usermgmt/cdk';
 import { ChirpConstruct } from '../../../../generative-ai-addons/packages/chirp/cdk/lib';
 import { DashboardConstruct } from '../../../../generative-ai-addons/packages/dashboard/cdk/lib';
 import { QuillConstruct } from '../../../../generative-ai-addons/packages/quill/cdk/lib';
 import { RookConstruct } from '../../../../generative-ai-addons/packages/rook/cdk/lib';
-import { NestPortalConstruct } from '../../../../generative-ai-addons/packages/nest-portal/cdk/lib';
+import { NestPortalConstruct } from '@birdworks-inc/genu-addon-nest-portal-cdk';
 
 export interface AddonStackProps extends cdk.StackProps {
   userPoolId: string;
