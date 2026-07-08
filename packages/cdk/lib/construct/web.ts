@@ -1,5 +1,5 @@
 import { Stack, RemovalPolicy, CfnResource, Duration } from 'aws-cdk-lib';
-import * as ssm from 'aws-cdk-lib/aws-ssm';
+import * as iam from 'aws-cdk-lib/aws-iam';
 import { Construct } from 'constructs';
 import {
   CloudFrontToS3,
@@ -336,6 +336,10 @@ function handler(event) {
       distribution: distribution,
       outputSourceDirectory: './packages/web/dist',
       buildCommands: [
+        // Fetched here (not via a CloudFormation SecureString reference)
+        // because Custom::CDKNodejsBuild does not support SSM secure
+        // dynamic references in its properties.
+        'export NODE_AUTH_TOKEN=$(aws ssm get-parameter --name /genu/github-packages-token --with-decryption --query Parameter.Value --output text)',
         'echo "@birdworks-inc:registry=https://npm.pkg.github.com" >> .npmrc',
         'echo "//npm.pkg.github.com/:_authToken=${NODE_AUTH_TOKEN}" >> .npmrc',
         'npm ci',
@@ -403,16 +407,22 @@ function handler(event) {
         VITE_APP_BRANDING_LOGO_PATH: props.brandingConfig?.logoPath ?? '',
         VITE_APP_BRANDING_TITLE: props.brandingConfig?.title ?? '',
         VITE_APP_ADDON_API_ENDPOINT: props.addonApiEndpointUrl ?? '',
-        NODE_AUTH_TOKEN: ssm.StringParameter.valueForStringParameter(
-          this,
-          '/genu/github-packages-token'
-        ),
       },
     });
     // Enhance computing resources
     (
       build.node.findChild('Project').node.defaultChild as CfnResource
     ).addPropertyOverride('Environment.ComputeType', ComputeType.MEDIUM);
+    // Allow the build container to fetch the GitHub Packages token itself
+    // (see the buildCommands export above for why).
+    build.grantPrincipal.addToPrincipalPolicy(
+      new iam.PolicyStatement({
+        actions: ['ssm:GetParameter'],
+        resources: [
+          `arn:aws:ssm:${Stack.of(this).region}:${Stack.of(this).account}:parameter/genu/github-packages-token`,
+        ],
+      })
+    );
 
     // ─── Nest Portal SPA build (only when enableNestPortal is set) ───
     // Builds packages/nest-portal/web with Vite via pnpm and uploads the
@@ -448,13 +458,17 @@ function handler(event) {
         buildCommands: [
           'corepack enable',
           'corepack prepare pnpm@10.33.0 --activate',
+          // Fetched here (not via a CloudFormation SecureString reference)
+          // because Custom::CDKNodejsBuild does not support SSM secure
+          // dynamic references in its properties.
+          'export NODE_AUTH_TOKEN=$(aws ssm get-parameter --name /genu/github-packages-token --with-decryption --query Parameter.Value --output text)',
           'echo "@birdworks-inc:registry=https://npm.pkg.github.com" >> .npmrc',
           'echo "//npm.pkg.github.com/:_authToken=${NODE_AUTH_TOKEN}" >> .npmrc',
           'pnpm install --frozen-lockfile',
           // Build addon packages first so their dist/ outputs (used by tsc to
           // resolve @birdworks-inc/genu-addon-*/web types) exist before the
           // Nest Portal type-check runs.
-          'pnpm --filter "@birdworks-inc/genu-addon-kit-web" run build',
+          'pnpm --filter "@birdworks-inc/genu-addon-kit" run build',
           'pnpm --filter "@birdworks-inc/genu-addon-chirp" run build',
           'pnpm --filter "@birdworks-inc/genu-addon-quill" run build',
           'pnpm --filter "@birdworks-inc/genu-addon-dashboard" run build',
@@ -480,15 +494,19 @@ function handler(event) {
           VITE_ADDON_API_ENDPOINT: props.addonApiEndpointUrl ?? '',
           // Comma-separated addon ids to enable. Unset means "enable all".
           VITE_ENABLED_ADDONS: props.enabledAddons?.join(',') ?? '',
-          NODE_AUTH_TOKEN: ssm.StringParameter.valueForStringParameter(
-            this,
-            '/genu/github-packages-token'
-          ),
         },
       });
       (
         nestBuild.node.findChild('Project').node.defaultChild as CfnResource
       ).addPropertyOverride('Environment.ComputeType', ComputeType.MEDIUM);
+      nestBuild.grantPrincipal.addToPrincipalPolicy(
+        new iam.PolicyStatement({
+          actions: ['ssm:GetParameter'],
+          resources: [
+            `arn:aws:ssm:${Stack.of(this).region}:${Stack.of(this).account}:parameter/genu/github-packages-token`,
+          ],
+        })
+      );
     }
   }
 }
