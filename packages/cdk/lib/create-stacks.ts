@@ -310,6 +310,14 @@ export const createStacks = (app: cdk.App, params: ProcessedStackInput) => {
     new DeletionPolicySetter(cdk.RemovalPolicy.DESTROY)
   );
 
+  // Anthropic (Claude) model ids available for addons (e.g. Chirp's model
+  // selection setting), sourced from cdk.json's modelIds so addons never
+  // hardcode a model id. Picking a default among these is left to each
+  // addon (e.g. Chirp prefers the newest Sonnet), not decided here.
+  const claudeModelIds = updatedParams.modelIds
+    .map((m) => m.modelId)
+    .filter((id) => id.includes('anthropic'));
+
   // Addon integration stack
   const addonStack = new AddonStack(app, `AddonStack${updatedParams.env}`, {
     env: {
@@ -336,6 +344,7 @@ export const createStacks = (app: cdk.App, params: ProcessedStackInput) => {
       `GenerativeAiUseCasesStack${updatedParams.env}-NestPortalBucketName`
     ),
     enabledAddons: updatedParams.enabledAddons,
+    claudeModelIds,
   });
 
   // AddonStack reads exported values from GenerativeAiUseCasesStack via

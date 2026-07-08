@@ -21,6 +21,8 @@ export interface AddonStackProps extends cdk.StackProps {
   nestPortalBucketName: string;
   // Which addons to deploy. Undefined/null means "deploy all" (backward compatible).
   enabledAddons?: string[] | null;
+  // Anthropic model ids available for Chirp's model selection setting.
+  claudeModelIds: string[];
 }
 
 export class AddonStack extends cdk.Stack {
@@ -36,6 +38,7 @@ export class AddonStack extends cdk.Stack {
       identityPoolId,
       nestPortalBucketName,
       enabledAddons,
+      claudeModelIds,
     } = props;
 
     // Undefined enabledAddons means "deploy all" for backward compatibility.
@@ -127,6 +130,7 @@ export class AddonStack extends cdk.Stack {
         userPoolId,
         statsTableName,
         statsTableArn,
+        claudeModelIds,
       });
     }
 
